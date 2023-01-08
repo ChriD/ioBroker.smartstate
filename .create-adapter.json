@@ -1,0 +1,48 @@
+{
+    "cli": true,
+    "target": "directory",
+    "adapterName": "smartstate",
+    "title": "SmartState",
+    "keywords": [
+        "counter",
+        "sum",
+        "state",
+        "OR",
+        "AND"
+    ],
+    "contributors": [
+        "ChriD"
+    ],
+    "expert": "yes",
+    "features": [
+        "adapter"
+    ],
+    "adminFeatures": [],
+    "type": "logic",
+    "startMode": "daemon",
+    "connectionType": "local",
+    "dataSource": "push",
+    "connectionIndicator": "no",
+    "language": "JavaScript",
+    "nodeVersion": "14",
+    "adminUi": "html",
+    "tools": [
+        "ESLint",
+        "type checking"
+    ],
+    "i18n": "words.js",
+    "releaseScript": "yes",
+    "devServer": "no",
+    "indentation": "Space (4)",
+    "quotes": "single",
+    "es6class": "yes",
+    "authorName": "ChriD",
+    "authorGithub": "ChriD",
+    "authorEmail": "chris_d85@hotmail.com",
+    "gitRemoteProtocol": "HTTPS",
+    "gitCommit": "yes",
+    "defaultBranch": "main",
+    "license": "MIT License",
+    "dependabot": "no",
+    "creatorVersion": "2.3.0"
+}

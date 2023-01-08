@@ -1,0 +1,87 @@
+{
+    "common": {
+        "name": "smartstate",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "zh-cn": "首次出版"
+            }
+        },
+        "title": "SmartState",
+        "titleLang": {
+            "en": "SmartState",
+            "de": "SmartState",
+            "ru": "SmartState",
+            "pt": "Estado Inteligente",
+            "nl": "SmartState",
+            "fr": "État intelligent",
+            "it": "Stato intelligente",
+            "es": "estado inteligente",
+            "pl": "Inteligentny stan",
+            "zh-cn": "智能状态"
+        },
+        "desc": {
+            "en": "smartstate",
+            "de": "smartstate",
+            "ru": "умное состояние",
+            "pt": "estado inteligente",
+            "nl": "slimme staat",
+            "fr": "état intelligent",
+            "it": "smartstate",
+            "es": "estado inteligente",
+            "pl": "inteligentny stan",
+            "zh-cn": "智能状态"
+        },
+        "authors": [
+            "ChriD <chris_d85@hotmail.com>"
+        ],
+        "keywords": [
+            "counter",
+            "sum",
+            "state",
+            "OR",
+            "AND"
+        ],
+        "license": "MIT",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "smartstate.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/ChriD/ioBroker.smartstate/main/admin/smartstate.png",
+        "readme": "https://github.com/ChriD/ioBroker.smartstate/blob/main/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "logic",
+        "compact": true,
+        "connectionType": "local",
+        "dataSource": "push",
+        "adminUI": {
+            "config": "materialize"
+        },
+        "dependencies": [
+            {
+                "js-controller": ">=3.3.22"
+            }
+        ],
+        "globalDependencies": [
+            {
+                "admin": ">=5.0.0"
+            }
+        ]
+    },
+    "native": {
+        "option1": true,
+        "option2": "42"
+    },
+    "objects": [],
+    "instanceObjects": []
+}
