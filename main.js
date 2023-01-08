@@ -157,6 +157,8 @@ class Smartstate extends utils.Adapter {
 
     async recalculateSmartState(_smartStateId)
     {
+        // TODO: add try catch....
+
         this.log.info(`Recalculating smartstate with id ${_smartStateId}`);
 
         const smartState = this.config.smartstate[_smartStateId];
@@ -177,6 +179,9 @@ class Smartstate extends utils.Adapter {
             this.log.info(JSON.stringify(childObject));
 
             const state = await this.getStateAsync(childObject.id);
+
+            this.log.info(JSON.stringify(state));
+
             let value = 0;
             if(childObject.function)
             {
