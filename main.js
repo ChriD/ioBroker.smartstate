@@ -12,7 +12,7 @@ class Smartstate extends utils.Adapter {
             ...options,
             name: 'smartstate',
         });
-      
+
         this.subscriptionSmartstateLink = {};
 
         this.on('ready', this.onReady.bind(this));
@@ -41,7 +41,22 @@ class Smartstate extends utils.Adapter {
         // build subscriptions from the configuration
         for (const [key, smartstate] of Object.entries(this.config.smartstate))
         {
-            this.log.info(`${key}: ${smartstate}`);
+            // TODO: add state if not there
+            //await this.setStateAsync(_statePath, { val: this.convertValue(objectValue, _type), ack: _ack });
+            this.log.info(`Erstelle status ${key}: ${JSON.stringify(smartstate)}`);
+
+            // build the tree if necessary
+            if(smartstate.path){
+                const pathArray = smartstate.path.split('.');
+                for (let pathIdx = 0; pathIdx < pathArray.length; pathIdx++){
+                    await this.createObjectNotExists(pathArray[pathIdx], pathArray[pathIdx], 'channel');
+                }
+            }
+
+            // create the state object. the value will be calculated and set later or if any child subscription changes
+            await this.createObjectNotExists(key, key, 'state');
+            //await this.setStateAsync(key, { val: this.convertValue(_stateValue, _stateType), ack: true });
+
             for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
             {
                 const childObject = smartstate.childs[childIdx];
@@ -51,11 +66,9 @@ class Smartstate extends utils.Adapter {
                 // create a lookup table/object for fast lookup of smartstates for a given subscription change
                 if(!this.subscriptionSmartstateLink[childObject.id])
                 {
-                    this.log.error('XXX');
                     this.subscriptionSmartstateLink[childObject.id] = {};
                     this.subscriptionSmartstateLink[childObject.id].links = new Array();
                 }
-                this.log.error('YYY');
                 this.subscriptionSmartstateLink[childObject.id].links.push(key);
 
                 this.log.info(`Added subscription to ${childObject.id}`);
@@ -139,21 +152,30 @@ class Smartstate extends utils.Adapter {
     {
         try
         {
-            if (state && state.ack)
+            if (state /*&& state.ack*/)
             {
                 // TODO:
                 this.log.warn(`State ${id} changed to ${state.val}`);
-            }
-            else
-            {
-                // The state was deleted.
-                // We do nothing here for now. This shouldn't bother us anyway.
             }
         }
         catch(_exception)
         {
             this.log.error(_exception.message);
         }
+    }
+
+
+    async createObjectNotExists(_id, _name, _type, _common = null)
+    {
+        const commonObject = _common ? _common : {};
+        commonObject.name = _name;
+
+        const objectContainer = {
+            type: _type,
+            common: commonObject,
+            native: {},
+        };
+        await this.setObjectNotExistsAsync(_id, objectContainer);
     }
 
     // If you need to accept messages in your adapter, uncomment the following block and the corresponding line in the constructor.
