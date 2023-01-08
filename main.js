@@ -51,9 +51,11 @@ class Smartstate extends utils.Adapter {
                 // create a lookup table/object for fast lookup of smartstates for a given subscription change
                 if(!this.subscriptionSmartstateLink[childObject.id])
                 {
+                    this.log.error('XXX');
                     this.subscriptionSmartstateLink[childObject.id] = {};
                     this.subscriptionSmartstateLink[childObject.id].links = new Array();
                 }
+                this.log.error('YYY');
                 this.subscriptionSmartstateLink[childObject.id].links.push(key);
 
                 this.log.info(`Added subscription to ${childObject.id}`);
