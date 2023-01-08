@@ -55,6 +55,7 @@ class Smartstate extends utils.Adapter {
             }
 
             // create the state object. the value will be calculated and set later or if any child subscription changes
+            // TODO: if type = count the datatype will be number
             await this.createObjectNotExists(this.getSmartstateIdWithPath(smartstate), key, 'state');
             //await this.setStateAsync(key, { val: this.convertValue(_stateValue, _stateType), ack: true });
 
@@ -104,16 +105,16 @@ class Smartstate extends utils.Adapter {
     {
         try
         {
-            if (state /*&& state.ack*/)
+            if (state && state.ack === true)
             {
                 this.log.warn(`State ${id} changed to ${state.val}  ACK=${state.ack}`);
 
                 // (re)calculate all the given smartstate values which are linked to this state
-                if(this.subscriptionSmartstateLink[state] && this.subscriptionSmartstateLink[state].links)
+                if(this.subscriptionSmartstateLink[id] && this.subscriptionSmartstateLink[id].links)
                 {
-                    for (let linkIdx=0; linkIdx<this.subscriptionSmartstateLink[state].links.length; linkIdx++)
+                    for (let linkIdx=0; linkIdx<this.subscriptionSmartstateLink[id].links.length; linkIdx++)
                     {
-                        this.recalculateSmartState(this.subscriptionSmartstateLink[state].links[linkIdx]);
+                        this.recalculateSmartState(this.subscriptionSmartstateLink[id].links[linkIdx]);
                     }
                 }
                 else
