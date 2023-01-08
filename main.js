@@ -53,9 +53,6 @@ class Smartstate extends utils.Adapter {
                 }
             }
 
-            // create the state object. the value will be calculated and set later or if any child subscription changes
-            await this.createObjectNotExists(this.getSmartstateIdWithPath(smartstate), key, 'state');
-
             for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
             {
                 const childObject = smartstate.childs[childIdx];
