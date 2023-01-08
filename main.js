@@ -172,6 +172,10 @@ class Smartstate extends utils.Adapter {
         for(let childIdx=1; childIdx<smartState.childs.length; childIdx++)
         {
             const childObject = smartState.childs[childIdx];
+
+            this.log.info(childObject);
+            this.log.info(JSON.stringify(childObject));
+
             const state = await this.getStateAsync(childObject.id);
             let value = 0;
             if(childObject.function)
