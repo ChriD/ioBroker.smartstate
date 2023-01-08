@@ -27,6 +27,7 @@ class Smartstate extends utils.Adapter {
     {
 
         // temporary configuration for testing
+        // TODO: count, sum, or, and, average, min, max
         this.config.smartstate = {};
         this.config.smartstate['kitchen_light_on_counter']  = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', type: 'count', path: 'lights', function: ''};
         this.config.smartstate['kitchen_light_on_counter'].childs = new Array();
@@ -174,11 +175,7 @@ class Smartstate extends utils.Adapter {
         for(let childIdx=1; childIdx<smartState.childs.length; childIdx++)
         {
             const childObject = smartState.childs[childIdx];
-
-            this.log.info(childObject);
-            this.log.info(JSON.stringify(childObject));
-
-            const state = await this.getStateAsync(childObject.id);
+            const state = await this.getForeignStateAsync(childObject.id);
 
             this.log.info(JSON.stringify(state));
 
