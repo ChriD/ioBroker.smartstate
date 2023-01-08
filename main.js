@@ -29,7 +29,7 @@ class Smartstate extends utils.Adapter {
 
         // temporary configuration for testing
         this.config.smartstate = {};
-        this.config.smartstate['kitchen_light_on_counter']  = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', type: 'count'};
+        this.config.smartstate['kitchen_light_on_counter']  = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', type: 'count' path: 'lights'};
         this.config.smartstate['kitchen_light_on_counter'].childs = new Array();
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Haupt.values.isOn', function: '' } );
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Indirekt.values.isOn', function: '' } );
@@ -50,7 +50,10 @@ class Smartstate extends utils.Adapter {
 
                 // create a lookup table/object for fast lookup of smartstates for a given subscription change
                 if(!this.subscriptionSmartstateLink[childObject.id])
+                {
+                    this.subscriptionSmartstateLink[childObject.id] = {};
                     this.subscriptionSmartstateLink[childObject.id].links = new Array();
+                }
                 this.subscriptionSmartstateLink[childObject.id].links.push(key);
 
                 this.log.info(`Added subscription to ${childObject.id}`);
