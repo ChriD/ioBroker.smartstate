@@ -37,7 +37,9 @@ class Smartstate extends utils.Adapter {
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Fotowand.values.isOn', function: '' } );
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'openknx.0.Schaltaktor_Dimmaktor.Schalten.Schaltaktor_|_Spots_|_Küche_Abwasch_|_Schalten', function: '' } );
 
-
+        this.config.smartstate['kitchen_light_on']  = { name: 'Küchenlicht an', id: 'kitchen_light_on', type: 'or', path: 'lights', function: ''};
+        this.config.smartstate['kitchen_light_on'].childs = new Array();
+        this.config.smartstate['kitchen_light_on'].childs.push( { type: 'state', id: 'smartstate.0.lights.kitchen_light_on_counter', function: '' } );
 
 
         // build subscriptions from the configuration
@@ -74,7 +76,7 @@ class Smartstate extends utils.Adapter {
             }
 
             // (re)calculate the given smartstate value and set it
-            this.recalculateSmartState(key);
+            await this.recalculateSmartState(key);
         }
     }
 
@@ -177,7 +179,7 @@ class Smartstate extends utils.Adapter {
             const childObject = smartState.childs[childIdx];
             const state = await this.getForeignStateAsync(childObject.id);
 
-            this.log.info(JSON.stringify(state));
+            this.log.info(`${childObject.id} ${state.val}`);
 
             let value = 0;
             if(childObject.function)
