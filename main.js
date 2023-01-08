@@ -28,7 +28,7 @@ class Smartstate extends utils.Adapter {
 
         // temporary configuration for testing
         this.config.smartstate = {};
-        this.config.smartstate['kitchen_light_on_counter']  = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', type: 'count', path: 'lights'};
+        this.config.smartstate['kitchen_light_on_counter']  = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', type: 'count', path: 'lights', function: ''};
         this.config.smartstate['kitchen_light_on_counter'].childs = new Array();
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Haupt.values.isOn', function: '' } );
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Indirekt.values.isOn', function: '' } );
@@ -99,7 +99,7 @@ class Smartstate extends utils.Adapter {
     {
         try
         {
-            if (state && state.ack === true)
+            if (state /*&& state.ack === true*/)
             {
                 this.log.warn(`State ${id} changed to ${state.val}  ACK=${state.ack}`);
 
@@ -166,9 +166,37 @@ class Smartstate extends utils.Adapter {
             return;
         }
 
-        // TODO: @@@
+        // TODO: number or boolean? or always number?
+        let smartValue = 0;
+
+        for(let childIdx=1; childIdx<smartState.childs.length; childIdx++)
+        {
+            const childObject = smartState.childs[childIdx];
+            const state = await this.getStateAsync(childObject.id);
+            let value = 0;
+            if(childObject.function)
+            {
+                // TODO: @@@
+                // value = runBuf(state.val, state) ??? use object as parameter?
+            }
+            else
+            {
+                value = state.val;
+            }
+
+            // TODO: if count do counting, if summ do adding , if OR do or if and do and.....
+            smartValue += value ? 1 : 0;
+        }
+
+        
+        if(smartState.function)
+        {
+            // TODO: @@@
+            // smartValue = runBuf(value, count, countAll) ??? use object as parameter?
+        }
+
         // TODO: if type = count the datatype will be number
-        await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, 'number', 'state', null);
+        await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, 'number', 'state', smartValue);
     }
 
 }
