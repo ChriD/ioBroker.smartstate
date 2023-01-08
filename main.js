@@ -36,16 +36,17 @@ class Smartstate extends utils.Adapter {
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Insel.values.isOn', function: '' } );
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Fotowand.values.isOn', function: '' } );
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'openknx.0.Schaltaktor_Dimmaktor.Schalten.Schaltaktor_|_Spots_|_Küche_Abwasch_|_Schalten', function: '' } );
-        //this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'stateSelector', id: '???', function: '' } );
+
+
+
 
         // build subscriptions from the configuration
         for (const [key, smartstate] of Object.entries(this.config.smartstate))
         {
-            // TODO: add state if not there
-            //await this.setStateAsync(_statePath, { val: this.convertValue(objectValue, _type), ack: _ack });
+            // add state if not there
             this.log.info(`Erstelle status ${key}: ${JSON.stringify(smartstate)}`);
 
-            // build the tree if necessary
+            // build the tree for the state if necessary
             if(smartstate.path){
                 const pathArray = smartstate.path.split('.');
                 for (let pathIdx = 0; pathIdx < pathArray.length; pathIdx++){
@@ -54,7 +55,7 @@ class Smartstate extends utils.Adapter {
             }
 
             // create the state object. the value will be calculated and set later or if any child subscription changes
-            await this.createObjectNotExists(smartstate.path ? (smartstate.path + '.' + key) : key, key, 'state');
+            await this.createObjectNotExists(this.getSmartstateIdWithPath(smartstate), key, 'state');
             //await this.setStateAsync(key, { val: this.convertValue(_stateValue, _stateType), ack: true });
 
             for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
@@ -69,65 +70,16 @@ class Smartstate extends utils.Adapter {
                     this.subscriptionSmartstateLink[childObject.id] = {};
                     this.subscriptionSmartstateLink[childObject.id].links = new Array();
                 }
+                // TODO: get all state id's which are within the selector if the smartstate child is of type 'selector'
+                // otherwise we do have an state key which we csan insert directly
                 this.subscriptionSmartstateLink[childObject.id].links.push(key);
 
                 this.log.info(`Added subscription to ${childObject.id}`);
             }
+
+            // (re)calculate the given smartstate value and set it
+            this.recalculateSmartState(key);
         }
-
-        //this.config.smartstate['kitchen_light_on']          = { name: 'Küchenlicht an', id: 'kitchen_light_on', type: 'or'};
-
-        // subscript to all states given in the configuration
-
-        //this.log.info('config option1: ' + this.config.option1);
-        //this.log.info('config option2: ' + this.config.option2);
-
-        /*
-        For every state in the system there has to be also an object of type state
-        Here a simple template for a boolean variable named "testVariable"
-        Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
-        await this.setObjectNotExistsAsync('testVariable', {
-            type: 'state',
-            common: {
-                name: 'testVariable',
-                type: 'boolean',
-                role: 'indicator',
-                read: true,
-                write: true,
-            },
-            native: {},
-        });
-        */
-
-        // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
-        //this.subscribeStates('testVariable');
-        // You can also add a subscription for multiple states. The following line watches all states starting with "lights."
-        // this.subscribeStates('lights.*');
-        // Or, if you really must, you can also watch all states. Don't do this if you don't need to. Otherwise this will cause a lot of unnecessary load on the system:
-        // this.subscribeStates('*');
-
-        /*
-            setState examples
-            you will notice that each setState will cause the stateChange event to fire (because of above subscribeStates cmd)
-        */
-       /*)
-        // the variable testVariable is set to true as command (ack=false)
-        await this.setStateAsync('testVariable', true);
-
-        // same thing, but the value is flagged "ack"
-        // ack should be always set to true if the value is received from or acknowledged from the target system
-        await this.setStateAsync('testVariable', { val: true, ack: true });
-
-        // same thing, but the state is deleted after 30s (getState will return null afterwards)
-        await this.setStateAsync('testVariable', { val: true, ack: true, expire: 30 });
-
-        // examples for the checkPassword/checkGroup functions
-        let result = await this.checkPasswordAsync('admin', 'iobroker');
-        this.log.info('check user admin pw iobroker: ' + result);
-
-        result = await this.checkGroupAsync('admin', 'admin');
-        this.log.info('check group user admin group admin: ' + result);
-        */
     }
 
     /**
@@ -148,20 +100,37 @@ class Smartstate extends utils.Adapter {
      * @param {string} id
      * @param {ioBroker.State | null | undefined} state
      */
-    onStateChange(id, state) 
+    onStateChange(id, state)
     {
         try
         {
             if (state /*&& state.ack*/)
             {
-                // TODO:
-                this.log.warn(`State ${id} changed to ${state.val}`);
+                this.log.warn(`State ${id} changed to ${state.val}  ACK=${state.ack}`);
+
+                // (re)calculate all the given smartstate values which are linked to this state
+                if(this.subscriptionSmartstateLink[state] && this.subscriptionSmartstateLink[state].links)
+                {
+                    for (let linkIdx=0; linkIdx<this.subscriptionSmartstateLink[state].links.length; linkIdx++)
+                    {
+                        this.recalculateSmartState(this.subscriptionSmartstateLink[state].links[linkIdx]);
+                    }
+                }
+                else
+                {
+                    this.log.warn(`State ${id} was subscribed but is not referenced in any smart state`);
+                }
             }
         }
         catch(_exception)
         {
             this.log.error(_exception.message);
         }
+    }
+
+    getSmartstateIdWithPath(_smartstateObject)
+    {
+        return _smartstateObject.path ? (_smartstateObject.path + '.' + _smartstateObject.id) : _smartstateObject.id;
     }
 
 
@@ -176,6 +145,25 @@ class Smartstate extends utils.Adapter {
             native: {},
         };
         await this.setObjectNotExistsAsync(_id, objectContainer);
+    }
+
+
+    async recalculateSmartState(_smartStateId)
+    {
+        this.log.info(`Recalculating smartstate with id ${_smartStateId}`);
+
+        const smartState = this.config.smartstate[_smartStateId];
+        if(!smartState)
+        {
+            this.log.error(`Smartstate with id ${_smartStateId} not found!`);
+            return;
+        }
+
+        // TODO: @@@
+
+
+        //await this.setStateAsync(this.getSmartstateIdWithPath(smartState), { val: this.convertValue(_stateValue, _stateType), ack: true });
+        await this.setStateAsync(this.getSmartstateIdWithPath(smartState), { val: null, ack: true });
     }
 
     // If you need to accept messages in your adapter, uncomment the following block and the corresponding line in the constructor.
