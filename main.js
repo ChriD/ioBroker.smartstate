@@ -1,15 +1,6 @@
 'use strict';
 
-/*
- * Created with @iobroker/create-adapter v2.3.0
- */
-
-// The adapter-core module gives you access to the core ioBroker functions
-// you need to create an adapter
 const utils = require('@iobroker/adapter-core');
-
-// Load your modules here, e.g.:
-// const fs = require("fs");
 
 class Smartstate extends utils.Adapter {
 
@@ -21,9 +12,11 @@ class Smartstate extends utils.Adapter {
             ...options,
             name: 'smartstate',
         });
+      
+        this.subscriptionSmartstateLink = {};
+
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
-        // this.on('objectChange', this.onObjectChange.bind(this));
         // this.on('message', this.onMessage.bind(this));
         this.on('unload', this.onUnload.bind(this));
     }
@@ -31,19 +24,50 @@ class Smartstate extends utils.Adapter {
     /**
      * Is called when databases are connected and adapter received configuration.
      */
-    async onReady() {
-        // Initialize your adapter here
+    async onReady()
+    {
 
-        // The adapters config (in the instance object everything under the attribute "native") is accessible via
-        // this.config:
-        this.log.info('config option1: ' + this.config.option1);
-        this.log.info('config option2: ' + this.config.option2);
+        // temporary configuration for testing
+        this.config.smartstate = {};
+        this.config.smartstate['kitchen_light_on_counter']  = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', type: 'count'};
+        this.config.smartstate['kitchen_light_on_counter'].childs = new Array();
+        this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Haupt.values.isOn', function: '' } );
+        this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Indirekt.values.isOn', function: '' } );
+        this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Insel.values.isOn', function: '' } );
+        this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Fotowand.values.isOn', function: '' } );
+        this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'openknx.0.Schaltaktor_Dimmaktor.Schalten.Schaltaktor_|_Spots_|_Küche_Abwasch_|_Schalten', function: '' } );
+        //this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'stateSelector', id: '???', function: '' } );
+
+        // build subscriptions from the configuration
+        for (const [key, smartstate] of Object.entries(this.config.smartstate))
+        {
+            this.log.info(`${key}: ${smartstate}`);
+            for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
+            {
+                const childObject = smartstate.childs[childIdx];
+
+                this.subscribeForeignStates(childObject.id);
+
+                // create a lookup table/object for fast lookup of smartstates for a given subscription change
+                if(!this.subscriptionSmartstateLink[childObject.id])
+                    this.subscriptionSmartstateLink[childObject.id].links = new Array();
+                this.subscriptionSmartstateLink[childObject.id].links.push(key);
+
+                this.log.info(`Added subscription to ${childObject.id}`);
+            }
+        }
+
+        //this.config.smartstate['kitchen_light_on']          = { name: 'Küchenlicht an', id: 'kitchen_light_on', type: 'or'};
+
+        // subscript to all states given in the configuration
+
+        //this.log.info('config option1: ' + this.config.option1);
+        //this.log.info('config option2: ' + this.config.option2);
 
         /*
         For every state in the system there has to be also an object of type state
         Here a simple template for a boolean variable named "testVariable"
         Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
-        */
         await this.setObjectNotExistsAsync('testVariable', {
             type: 'state',
             common: {
@@ -55,9 +79,10 @@ class Smartstate extends utils.Adapter {
             },
             native: {},
         });
+        */
 
         // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
-        this.subscribeStates('testVariable');
+        //this.subscribeStates('testVariable');
         // You can also add a subscription for multiple states. The following line watches all states starting with "lights."
         // this.subscribeStates('lights.*');
         // Or, if you really must, you can also watch all states. Don't do this if you don't need to. Otherwise this will cause a lot of unnecessary load on the system:
@@ -67,6 +92,7 @@ class Smartstate extends utils.Adapter {
             setState examples
             you will notice that each setState will cause the stateChange event to fire (because of above subscribeStates cmd)
         */
+       /*)
         // the variable testVariable is set to true as command (ack=false)
         await this.setStateAsync('testVariable', true);
 
@@ -83,6 +109,7 @@ class Smartstate extends utils.Adapter {
 
         result = await this.checkGroupAsync('admin', 'admin');
         this.log.info('check group user admin group admin: ' + result);
+        */
     }
 
     /**
@@ -91,47 +118,36 @@ class Smartstate extends utils.Adapter {
      */
     onUnload(callback) {
         try {
-            // Here you must clear all timeouts or intervals that may still be active
-            // clearTimeout(timeout1);
-            // clearTimeout(timeout2);
-            // ...
-            // clearInterval(interval1);
-
+            // we have nothing to do when unloading the adapter
             callback();
         } catch (e) {
             callback();
         }
     }
 
-    // If you need to react to object changes, uncomment the following block and the corresponding line in the constructor.
-    // You also need to subscribe to the objects with `this.subscribeObjects`, similar to `this.subscribeStates`.
-    // /**
-    //  * Is called if a subscribed object changes
-    //  * @param {string} id
-    //  * @param {ioBroker.Object | null | undefined} obj
-    //  */
-    // onObjectChange(id, obj) {
-    //     if (obj) {
-    //         // The object was changed
-    //         this.log.info(`object ${id} changed: ${JSON.stringify(obj)}`);
-    //     } else {
-    //         // The object was deleted
-    //         this.log.info(`object ${id} deleted`);
-    //     }
-    // }
-
     /**
      * Is called if a subscribed state changes
      * @param {string} id
      * @param {ioBroker.State | null | undefined} state
      */
-    onStateChange(id, state) {
-        if (state) {
-            // The state was changed
-            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
-        } else {
-            // The state was deleted
-            this.log.info(`state ${id} deleted`);
+    onStateChange(id, state) 
+    {
+        try
+        {
+            if (state && state.ack)
+            {
+                // TODO:
+                this.log.warn(`State ${id} changed to ${state.val}`);
+            }
+            else
+            {
+                // The state was deleted.
+                // We do nothing here for now. This shouldn't bother us anyway.
+            }
+        }
+        catch(_exception)
+        {
+            this.log.error(_exception.message);
         }
     }
 
@@ -156,12 +172,7 @@ class Smartstate extends utils.Adapter {
 }
 
 if (require.main !== module) {
-    // Export the constructor in compact mode
-    /**
-     * @param {Partial<utils.AdapterOptions>} [options={}]
-     */
     module.exports = (options) => new Smartstate(options);
 } else {
-    // otherwise start the instance directly
     new Smartstate();
 }
