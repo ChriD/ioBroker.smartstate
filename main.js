@@ -17,7 +17,6 @@ class Smartstate extends utils.Adapter {
 
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
-        // this.on('message', this.onMessage.bind(this));
         this.on('unload', this.onUnload.bind(this));
     }
 
@@ -55,9 +54,7 @@ class Smartstate extends utils.Adapter {
             }
 
             // create the state object. the value will be calculated and set later or if any child subscription changes
-            // TODO: if type = count the datatype will be number
             await this.createObjectNotExists(this.getSmartstateIdWithPath(smartstate), key, 'state');
-            //await this.setStateAsync(key, { val: this.convertValue(_stateValue, _stateType), ack: true });
 
             for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
             {
@@ -148,6 +145,18 @@ class Smartstate extends utils.Adapter {
         await this.setObjectNotExistsAsync(_id, objectContainer);
     }
 
+    async createOrUpdateState(_id, _name, _stateType, _stateRole, _stateValue)
+    {
+        const commonObject = {
+            type: _stateType,
+            role: _stateRole ? _stateRole : 'state',
+            read: true,
+            write: true
+        };
+        await this.createObjectNotExists(_id, _name, 'state', commonObject);
+        await this.setStateAsync(_id, { val: _stateValue, ack: true });
+    }
+
 
     async recalculateSmartState(_smartStateId)
     {
@@ -161,29 +170,9 @@ class Smartstate extends utils.Adapter {
         }
 
         // TODO: @@@
-
-
-        //await this.setStateAsync(this.getSmartstateIdWithPath(smartState), { val: this.convertValue(_stateValue, _stateType), ack: true });
-        await this.setStateAsync(this.getSmartstateIdWithPath(smartState), { val: null, ack: true });
+        // TODO: if type = count the datatype will be number
+        await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, 'number', 'state', null);
     }
-
-    // If you need to accept messages in your adapter, uncomment the following block and the corresponding line in the constructor.
-    // /**
-    //  * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
-    //  * Using this method requires "common.messagebox" property to be set to true in io-package.json
-    //  * @param {ioBroker.Message} obj
-    //  */
-    // onMessage(obj) {
-    //     if (typeof obj === 'object' && obj.message) {
-    //         if (obj.command === 'send') {
-    //             // e.g. send email or pushover or whatever
-    //             this.log.info('send command');
-
-    //             // Send response in callback if required
-    //             if (obj.callback) this.sendTo(obj.from, obj.command, 'Message received', obj.callback);
-    //         }
-    //     }
-    // }
 
 }
 
