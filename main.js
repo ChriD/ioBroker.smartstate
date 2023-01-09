@@ -226,6 +226,8 @@ class Smartstate extends utils.Adapter {
                     break;
             }
 
+            this.log.warn(`${smartValue}`);
+
             // run through the childs and calculate the overall value of the smart state
             for(let childIdx=0; childIdx<smartState.childs.length; childIdx++)
             {
@@ -256,12 +258,16 @@ class Smartstate extends utils.Adapter {
                         smartValue += value;
                         break;
 
-                    case STATECALCTYPE.AND:
+                    case STATECALCTYPE.OR:
+                        this.log.warn(`OR ${smartValue}`);
                         smartValue = smartValue || value;
+                        this.log.warn(`OR 2 ${smartValue}`);
                         break;
 
-                    case STATECALCTYPE.OR:
+                    case STATECALCTYPE.AND:
+                        this.log.warn(`AND ${smartValue}`);
                         smartValue = smartValue && value;
+                        this.log.warn(`AND 2 ${smartValue}`);
                         break;
 
                     case STATECALCTYPE.EQUALS:
