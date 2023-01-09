@@ -152,7 +152,7 @@ class Smartstate extends utils.Adapter {
             const smartStateId = this.recalculationStack.shift();
             await this.recalculateSmartState(smartStateId);
         }
-        this.setTimeout(this.calculateStatesInStack, 50);
+        this.setTimeout(this.calculateStatesInStack.bind(this), 50);
     }
 
 
@@ -203,6 +203,7 @@ class Smartstate extends utils.Adapter {
 
         let smartValue;
         let curMinValue, curMaxValue, firstValue;
+        let stateDatatype;
 
         // initialize the smart value fromn its csalculation type
         switch(smartState.calctype)
@@ -213,12 +214,14 @@ class Smartstate extends utils.Adapter {
             case STATECALCTYPE.MIN:
             case STATECALCTYPE.MAX:
                 smartValue = 0;
+                stateDatatype = 'number';
                 break;
 
             case STATECALCTYPE.AND:
             case STATECALCTYPE.OR:
             case STATECALCTYPE.EQUALS:
                 smartValue = true;
+                stateDatatype = 'boolean';
                 break;
         }
 
@@ -304,8 +307,7 @@ class Smartstate extends utils.Adapter {
             // smartValue = runBuf(value, count, countAll) ??? use object as parameter?
         }
 
-        // TODO: if type = count the datatype will be number
-        await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, 'number', 'state', smartValue);
+        await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, stateDatatype, 'state', smartValue);
     }
 
 }
