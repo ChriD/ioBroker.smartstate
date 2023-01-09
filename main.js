@@ -42,7 +42,6 @@ class Smartstate extends utils.Adapter {
     {
 
         // temporary configuration for testing
-        // TODO: count, sum, or, and, average, min, max
         this.config.smartstate = {};
         this.config.smartstate['kitchen_light_on_counter']  = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', calctype: STATECALCTYPE.COUNT, path: 'lights', function: ''};
         this.config.smartstate['kitchen_light_on_counter'].childs = new Array();
@@ -192,122 +191,145 @@ class Smartstate extends utils.Adapter {
     {
         // TODO: add try catch....
 
-        this.log.info(`Recalculating smartstate with id ${_smartStateId}`);
+        this.log.debug(`Recalculating smartstate with id ${_smartStateId}`);
 
         const smartState = this.config.smartstate[_smartStateId];
         if(!smartState)
         {
-            this.log.error(`Smartstate with id ${_smartStateId} not found!`);
+            this.log.error(`SmartState with id ${_smartStateId} not found!`);
             return;
         }
 
-        let smartValue;
-        let curMinValue, curMaxValue, firstValue;
-        let stateDatatype;
-
-        // initialize the smart value fromn its csalculation type
-        switch(smartState.calctype)
+        try
         {
-            case STATECALCTYPE.COUNT:
-            case STATECALCTYPE.SUM:
-            case STATECALCTYPE.AVG:
-            case STATECALCTYPE.MIN:
-            case STATECALCTYPE.MAX:
-                smartValue = 0;
-                stateDatatype = 'number';
-                break;
 
-            case STATECALCTYPE.AND:
-            case STATECALCTYPE.OR:
-            case STATECALCTYPE.EQUALS:
-                smartValue = true;
-                stateDatatype = 'boolean';
-                break;
-        }
+            let smartValue;
+            let curMinValue, curMaxValue, firstValue;
+            let stateDatatype;
 
-        // run through the childs and calculate the overall value of the smart state
-        for(let childIdx=1; childIdx<smartState.childs.length; childIdx++)
-        {
-            const childObject = smartState.childs[childIdx];
-            const state = await this.getForeignStateAsync(childObject.id);
-
-            this.log.info(`${childObject.id} ${state.val}`);
-
-            let value = 0;
-            if(childObject.function)
-            {
-                // TODO: @@@
-                // value = runBuf(state.val, state) ??? use object as parameter?
-            }
-            else
-            {
-                value = state.val;
-            }
-
-            // store the first value for further calculations
-            firstValue = childIdx === 1 ? value : firstValue;
-
-            // TODO: if count do counting, if summ do adding , if OR do or if and do and.....
+            // initialize the smart value fromn its csalculation type
             switch(smartState.calctype)
             {
                 case STATECALCTYPE.COUNT:
-                    smartValue += value ? 1 : 0;
-                    break;
-
                 case STATECALCTYPE.SUM:
                 case STATECALCTYPE.AVG:
-                    smartValue += value;
+                case STATECALCTYPE.MIN:
+                case STATECALCTYPE.MAX:
+                    smartValue = 0;
+                    stateDatatype = 'number';
                     break;
 
                 case STATECALCTYPE.AND:
-                    smartValue = smartValue || value;
-                    break;
-
                 case STATECALCTYPE.OR:
-                    smartValue = smartValue && value;
-                    break;
-
                 case STATECALCTYPE.EQUALS:
-                    if(value != firstValue)
-                        smartValue = false;
+                    smartValue = true;
+                    stateDatatype = 'boolean';
                     break;
-
-                case STATECALCTYPE.MIN:
-                    if(value < curMinValue)
-                    {
-                        curMinValue = value;
-                        smartValue = curMinValue;
-                    }
-                    break;
-
-                case STATECALCTYPE.MAX:
-                    if(value > curMaxValue)
-                    {
-                        curMaxValue = value;
-                        smartValue = curMaxValue;
-                    }
-                    break;
-
-                default:
-                    this.log.error(`Wrong or not implemented calculation type: ${smartState.calctype}`);
             }
-        }
 
-        // if we have set the state type to average value, we have to divide the sum of the values (which is the smartValue on AVG type)
-        // with the count of the childs.
-        if(smartState.calctype == STATECALCTYPE.AVG && smartState.childs.length)
+            // run through the childs and calculate the overall value of the smart state
+            for(let childIdx=0; childIdx<smartState.childs.length; childIdx++)
+            {
+                const childObject = smartState.childs[childIdx];
+                const state = await this.getForeignStateAsync(childObject.id);
+
+                this.log.debug(`${childObject.id}: ${state.val}`);
+
+                let value;
+                if(childObject.function)
+                    value = this.evaluateFunction(childObject.function, { state: state, value: state.val, childCount: smartState.childs.length });
+                else
+                    value = state.val;
+
+                // store the first value for further calculations
+                firstValue = childIdx === 0 ? value : firstValue;
+
+                // for each calculation type we have to do another calculation using the child values
+                // see the different cases for further info. Its really a very easy approach but it will be sufficient for many cases
+                switch(smartState.calctype)
+                {
+                    case STATECALCTYPE.COUNT:
+                        smartValue += value ? 1 : 0;
+                        break;
+
+                    case STATECALCTYPE.SUM:
+                    case STATECALCTYPE.AVG:
+                        smartValue += value;
+                        break;
+
+                    case STATECALCTYPE.AND:
+                        smartValue = smartValue || value;
+                        break;
+
+                    case STATECALCTYPE.OR:
+                        smartValue = smartValue && value;
+                        break;
+
+                    case STATECALCTYPE.EQUALS:
+                        if(value != firstValue)
+                            smartValue = false;
+                        break;
+
+                    case STATECALCTYPE.MIN:
+                        if(value < curMinValue)
+                        {
+                            curMinValue = value;
+                            smartValue = curMinValue;
+                        }
+                        break;
+
+                    case STATECALCTYPE.MAX:
+                        if(value > curMaxValue)
+                        {
+                            curMaxValue = value;
+                            smartValue = curMaxValue;
+                        }
+                        break;
+
+                    default:
+                        this.log.error(`Wrong or not implemented calculation type: ${smartState.calctype}`);
+                }
+            }
+
+            // if we have set the state type to average value, we have to divide the sum of the values (which is the smartValue on AVG type)
+            // with the count of the childs.
+            if(smartState.calctype == STATECALCTYPE.AVG && smartState.childs.length)
+                smartValue = smartValue /  smartState.childs.length;
+
+            // at the end a user function may change the overall smartValue
+            if(smartState.function)
+                smartValue = this.evaluateFunction(childObject.function, { value: smartValue, childCount: smartState.childs.length });
+
+            await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, stateDatatype, 'state', smartValue);
+        }
+        catch(_error)
         {
-            smartValue = smartValue /  smartState.childs.length;
+            this.log.error(`Recalculating od smartstate ${_smartStateId} failed: ${_error.toString()}`);
         }
+    }
 
 
-        if(smartState.function)
+    evaluateFunction(_functionPart, _params)
+    {
+        let value;
+
+        try
         {
-            // TODO: @@@
-            // smartValue = runBuf(value, count, countAll) ??? use object as parameter?
+            const functionString = `function evalFunc(_params){
+                let value;
+                ${_functionPart}
+                return value;
+            }`;
+
+            const evalFunction = new Function (functionString);
+            value = evalFunction(_params);
+        }
+        catch(_error)
+        {
+            this.log.error(_error.toString());
         }
 
-        await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, stateDatatype, 'state', smartValue);
+        return value;
     }
 
 }
