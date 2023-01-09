@@ -2,6 +2,20 @@
 
 const utils = require('@iobroker/adapter-core');
 
+
+const STATECALCTYPE = {
+    COUNT: 'count',
+    SUM: 'sum',
+    OR: 'or',
+    AND: 'and',
+    AVG: 'avg',
+    MIN: 'min',
+    MAX: 'max',
+    EQUALS: 'equals'
+};
+
+
+
 class Smartstate extends utils.Adapter {
 
     /**
@@ -14,6 +28,7 @@ class Smartstate extends utils.Adapter {
         });
 
         this.subscriptionSmartstateLink = {};
+        this.recalculationStack = new Array();
 
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
@@ -29,7 +44,7 @@ class Smartstate extends utils.Adapter {
         // temporary configuration for testing
         // TODO: count, sum, or, and, average, min, max
         this.config.smartstate = {};
-        this.config.smartstate['kitchen_light_on_counter']  = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', type: 'count', path: 'lights', function: ''};
+        this.config.smartstate['kitchen_light_on_counter']  = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', calctype: STATECALCTYPE.COUNT, path: 'lights', function: ''};
         this.config.smartstate['kitchen_light_on_counter'].childs = new Array();
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Haupt.values.isOn', function: '' } );
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Indirekt.values.isOn', function: '' } );
@@ -37,7 +52,7 @@ class Smartstate extends utils.Adapter {
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Fotowand.values.isOn', function: '' } );
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'openknx.0.Schaltaktor_Dimmaktor.Schalten.Schaltaktor_|_Spots_|_Küche_Abwasch_|_Schalten', function: '' } );
 
-        this.config.smartstate['kitchen_light_on']  = { name: 'Küchenlicht an', id: 'kitchen_light_on', type: 'or', path: 'lights', function: ''};
+        this.config.smartstate['kitchen_light_on']  = { name: 'Küchenlicht an', id: 'kitchen_light_on', calctype: STATECALCTYPE.OR, path: 'lights', function: ''};
         this.config.smartstate['kitchen_light_on'].childs = new Array();
         this.config.smartstate['kitchen_light_on'].childs.push( { type: 'state', id: 'smartstate.0.lights.kitchen_light_on_counter', function: '' } );
 
@@ -78,6 +93,8 @@ class Smartstate extends utils.Adapter {
             // (re)calculate the given smartstate value and set it
             await this.recalculateSmartState(key);
         }
+
+        this.calculateStatesInStack();
     }
 
     /**
@@ -111,7 +128,9 @@ class Smartstate extends utils.Adapter {
                 {
                     for (let linkIdx=0; linkIdx<this.subscriptionSmartstateLink[id].links.length; linkIdx++)
                     {
-                        this.recalculateSmartState(this.subscriptionSmartstateLink[id].links[linkIdx]);
+                        // only add the ids for calculation into a stack buffer, this stack bu7ffer will
+                        // be processed and deleted by a timer method
+                        this.recalculationStack.push(this.subscriptionSmartstateLink[id].links[linkIdx]);
                     }
                 }
                 else
@@ -125,6 +144,17 @@ class Smartstate extends utils.Adapter {
             this.log.error(_exception.message);
         }
     }
+
+
+    async calculateStatesInStack()
+    {
+        while (this.recalculationStack.length > 0) {
+            const smartStateId = this.recalculationStack.shift();
+            await this.recalculateSmartState(smartStateId);
+        }
+        this.setTimeout(this.calculateStatesInStack, 50);
+    }
+
 
     getSmartstateIdWithPath(_smartstateObject)
     {
@@ -171,9 +201,28 @@ class Smartstate extends utils.Adapter {
             return;
         }
 
-        // TODO: number or boolean? or always number?
-        let smartValue = 0;
+        let smartValue;
+        let curMinValue, curMaxValue, firstValue;
 
+        // initialize the smart value fromn its csalculation type
+        switch(smartState.calctype)
+        {
+            case STATECALCTYPE.COUNT:
+            case STATECALCTYPE.SUM:
+            case STATECALCTYPE.AVG:
+            case STATECALCTYPE.MIN:
+            case STATECALCTYPE.MAX:
+                smartValue = 0;
+                break;
+
+            case STATECALCTYPE.AND:
+            case STATECALCTYPE.OR:
+            case STATECALCTYPE.EQUALS:
+                smartValue = true;
+                break;
+        }
+
+        // run through the childs and calculate the overall value of the smart state
         for(let childIdx=1; childIdx<smartState.childs.length; childIdx++)
         {
             const childObject = smartState.childs[childIdx];
@@ -192,11 +241,63 @@ class Smartstate extends utils.Adapter {
                 value = state.val;
             }
 
+            // store the first value for further calculations
+            firstValue = childIdx === 1 ? value : firstValue;
+
             // TODO: if count do counting, if summ do adding , if OR do or if and do and.....
-            smartValue += value ? 1 : 0;
+            switch(smartState.calctype)
+            {
+                case STATECALCTYPE.COUNT:
+                    smartValue += value ? 1 : 0;
+                    break;
+
+                case STATECALCTYPE.SUM:
+                case STATECALCTYPE.AVG:
+                    smartValue += value;
+                    break;
+
+                case STATECALCTYPE.AND:
+                    smartValue = smartValue || value;
+                    break;
+
+                case STATECALCTYPE.OR:
+                    smartValue = smartValue && value;
+                    break;
+
+                case STATECALCTYPE.EQUALS:
+                    if(value != firstValue)
+                        smartValue = false;
+                    break;
+
+                case STATECALCTYPE.MIN:
+                    if(value < curMinValue)
+                    {
+                        curMinValue = value;
+                        smartValue = curMinValue;
+                    }
+                    break;
+
+                case STATECALCTYPE.MAX:
+                    if(value > curMaxValue)
+                    {
+                        curMaxValue = value;
+                        smartValue = curMaxValue;
+                    }
+                    break;
+
+                default:
+                    this.log.error(`Wrong or not implemented calculation type: ${smartState.calctype}`);
+            }
         }
 
-        
+        // if we have set the state type to average value, we have to divide the sum of the values (which is the smartValue on AVG type)
+        // with the count of the childs.
+        if(smartState.calctype == STATECALCTYPE.AVG && smartState.childs.length)
+        {
+            smartValue = smartValue /  smartState.childs.length;
+        }
+
+
         if(smartState.function)
         {
             // TODO: @@@
