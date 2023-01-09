@@ -43,7 +43,7 @@ class Smartstate extends utils.Adapter {
 
         // temporary configuration for testing
         this.config.smartstate = {};
-        this.config.smartstate['kitchen_light_on_counter']  = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', calctype: STATECALCTYPE.COUNT, path: 'lights', function: ''};
+        this.config.smartstate['kitchen_light_on_counter'] = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', calctype: STATECALCTYPE.COUNT, path: 'lights', function: ''};
         this.config.smartstate['kitchen_light_on_counter'].childs = new Array();
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Haupt.values.isOn', function: '' } );
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Indirekt.values.isOn', function: '' } );
@@ -51,7 +51,7 @@ class Smartstate extends utils.Adapter {
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Fotowand.values.isOn', function: '' } );
         this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'openknx.0.Schaltaktor_Dimmaktor.Schalten.Schaltaktor_|_Spots_|_Küche_Abwasch_|_Schalten', function: '' } );
 
-        this.config.smartstate['kitchen_light_on']  = { name: 'Küchenlicht an', id: 'kitchen_light_on', calctype: STATECALCTYPE.OR, path: 'lights', function: ''};
+        this.config.smartstate['kitchen_light_on'] = { name: 'Küchenlicht an', id: 'kitchen_light_on', calctype: STATECALCTYPE.OR, path: 'lights', function: ''};
         this.config.smartstate['kitchen_light_on'].childs = new Array();
         this.config.smartstate['kitchen_light_on'].childs.push( { type: 'state', id: 'smartstate.0.lights.kitchen_light_on_counter', function: '' } );
 
@@ -202,7 +202,6 @@ class Smartstate extends utils.Adapter {
 
         try
         {
-
             let smartValue;
             let curMinValue, curMaxValue, firstValue;
             let stateDatatype;
@@ -262,6 +261,7 @@ class Smartstate extends utils.Adapter {
                         break;
 
                     case STATECALCTYPE.OR:
+                        this.log.debug(`${smartValue} || ${value}`);
                         smartValue = smartValue && value;
                         break;
 
