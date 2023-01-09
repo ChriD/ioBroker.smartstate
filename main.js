@@ -40,7 +40,6 @@ class Smartstate extends utils.Adapter {
      */
     async onReady()
     {
-
         // temporary configuration for testing
         this.config.smartstate = {};
         this.config.smartstate['kitchen_light_on_counter'] = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', calctype: STATECALCTYPE.COUNT, path: 'lights', function: ''};
@@ -55,6 +54,7 @@ class Smartstate extends utils.Adapter {
         this.config.smartstate['kitchen_light_on'].childs = new Array();
         this.config.smartstate['kitchen_light_on'].childs.push( { type: 'state', id: 'smartstate.0.lights.kitchen_light_on_counter', function: '' } );
 
+        // TODO: create all states with default values so subscription will work????
 
         // build subscriptions from the configuration
         for (const [key, smartstate] of Object.entries(this.config.smartstate))
@@ -73,20 +73,7 @@ class Smartstate extends utils.Adapter {
             for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
             {
                 const childObject = smartstate.childs[childIdx];
-
-                this.subscribeForeignStates(childObject.id);
-
-                // create a lookup table/object for fast lookup of smartstates for a given subscription change
-                if(!this.subscriptionSmartstateLink[childObject.id])
-                {
-                    this.subscriptionSmartstateLink[childObject.id] = {};
-                    this.subscriptionSmartstateLink[childObject.id].links = new Array();
-                }
-                // TODO: get all state id's which are within the selector if the smartstate child is of type 'selector'
-                // otherwise we do have an state key which we csan insert directly
-                this.subscriptionSmartstateLink[childObject.id].links.push(key);
-
-                this.log.info(`Added subscription to ${childObject.id}`);
+                this.addSubscriptionToForeignState(key, childObject.id);
             }
 
             // (re)calculate the given smartstate value and set it
@@ -94,6 +81,23 @@ class Smartstate extends utils.Adapter {
         }
 
         this.calculateStatesInStack();
+    }
+
+    addSubscriptionToForeignState(_smartstateId, _selectorOrId)
+    {
+        this.subscribeForeignStates(_selectorOrId);
+
+        // create a lookup table/object for fast lookup of smartstates for a given subscription change
+        if(!this.subscriptionSmartstateLink[_selectorOrId])
+        {
+            this.subscriptionSmartstateLink[_selectorOrId] = {};
+            this.subscriptionSmartstateLink[_selectorOrId].links = new Array();
+        }
+        // TODO: get all state id's which are within the selector if the smartstate child is of type 'selector'
+        // otherwise we do have an state key which we csan insert directly
+        this.subscriptionSmartstateLink[_selectorOrId].links.push(_smartstateId);
+
+        this.log.info(`Added subscription to ${_selectorOrId}`);
     }
 
     /**
@@ -189,8 +193,6 @@ class Smartstate extends utils.Adapter {
 
     async recalculateSmartState(_smartStateId)
     {
-        // TODO: add try catch....
-
         this.log.debug(`Recalculating smartstate with id ${_smartStateId}`);
 
         const smartState = this.config.smartstate[_smartStateId];
@@ -219,14 +221,16 @@ class Smartstate extends utils.Adapter {
                     break;
 
                 case STATECALCTYPE.AND:
-                case STATECALCTYPE.OR:
                 case STATECALCTYPE.EQUALS:
                     smartValue = true;
                     stateDatatype = 'boolean';
                     break;
-            }
 
-            this.log.warn(`${smartValue}`);
+                case STATECALCTYPE.OR:
+                    smartValue = false;
+                    stateDatatype = 'boolean';
+                    break;
+            }
 
             // run through the childs and calculate the overall value of the smart state
             for(let childIdx=0; childIdx<smartState.childs.length; childIdx++)
@@ -300,6 +304,8 @@ class Smartstate extends utils.Adapter {
             // at the end a user function may change the overall smartValue
             if(smartState.function)
                 smartValue = this.evaluateFunction(smartState.function, { value: smartValue, childCount: smartState.childs.length });
+
+            this.log.debug(`New value was created for smartstate ${_smartStateId}: ${smartValue}`);
 
             await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, stateDatatype, 'state', smartValue);
         }
