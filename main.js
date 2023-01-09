@@ -234,7 +234,7 @@ class Smartstate extends utils.Adapter {
                 const childObject = smartState.childs[childIdx];
                 const state = await this.getForeignStateAsync(childObject.id);
 
-                this.log.debug(`Child: ${childObject.id}: ${state.val}`);
+                this.log.debug(`Calculation-Child: ${childObject.id}: ${state.val}`);
 
                 let value;
                 if(childObject.function)
