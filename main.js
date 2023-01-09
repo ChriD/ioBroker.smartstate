@@ -298,7 +298,7 @@ class Smartstate extends utils.Adapter {
 
             // at the end a user function may change the overall smartValue
             if(smartState.function)
-                smartValue = this.evaluateFunction(childObject.function, { value: smartValue, childCount: smartState.childs.length });
+                smartValue = this.evaluateFunction(smartState.function, { value: smartValue, childCount: smartState.childs.length });
 
             await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, stateDatatype, 'state', smartValue);
         }
