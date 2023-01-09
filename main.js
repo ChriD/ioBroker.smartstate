@@ -234,7 +234,7 @@ class Smartstate extends utils.Adapter {
                 const childObject = smartState.childs[childIdx];
                 const state = await this.getForeignStateAsync(childObject.id);
 
-                this.log.debug(`${childObject.id}: ${state.val}`);
+                this.log.debug(`Child: ${childObject.id}: ${state.val}`);
 
                 let value;
                 if(childObject.function)
@@ -259,15 +259,11 @@ class Smartstate extends utils.Adapter {
                         break;
 
                     case STATECALCTYPE.OR:
-                        this.log.warn(`OR ${smartValue}`);
-                        smartValue = smartValue || value;
-                        this.log.warn(`OR 2 ${smartValue}`);
+                        smartValue = smartValue || (value ? true : false);
                         break;
 
                     case STATECALCTYPE.AND:
-                        this.log.warn(`AND ${smartValue}`);
-                        smartValue = smartValue && value;
-                        this.log.warn(`AND 2 ${smartValue}`);
+                        smartValue = smartValue && (value ? true : false);
                         break;
 
                     case STATECALCTYPE.EQUALS:
@@ -296,20 +292,14 @@ class Smartstate extends utils.Adapter {
                 }
             }
 
-            this.log.warn(`${smartValue}`);
-
             // if we have set the state type to average value, we have to divide the sum of the values (which is the smartValue on AVG type)
             // with the count of the childs.
             if(smartState.calctype == STATECALCTYPE.AVG && smartState.childs.length)
                 smartValue = smartValue / smartState.childs.length;
 
-                this.log.warn(`${smartValue}`);
-
             // at the end a user function may change the overall smartValue
             if(smartState.function)
                 smartValue = this.evaluateFunction(smartState.function, { value: smartValue, childCount: smartState.childs.length });
-
-                this.log.warn(`${smartValue}`);
 
             await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, stateDatatype, 'state', smartValue);
         }
