@@ -13,15 +13,68 @@
     <script type="text/javascript" src="../../lib/js/materialize.js"></script>
     <script type="text/javascript" src="../../js/adapter-settings.js"></script>
 
+
     <!-- Load our own files -->
+
+    <script src="gui.lit.simpleList.js" type="module"></script>
+
     <link rel="stylesheet" type="text/css" href="style.css" />
     <script type="text/javascript" src="words.js"></script>
+    <script type="text/javascript" src="list.min.js"></script>
 
+    
     <script type="text/javascript">
-        // This will be called by the admin adapter when the settings page loads
-        function load(settings, onChange) {
-            // example: select elements with id=key and class=value and insert value
+
+        
+        //let settings ={}
+        const STATECALCTYPE = {
+            COUNT: 'count',
+            SUM: 'sum',
+            OR: 'or',
+            AND: 'and',
+            AVG: 'avg',
+            MIN: 'min',
+            MAX: 'max',
+            EQUALS: 'equals'
+        };
+
+        function load(settings, onChange) {            
             if (!settings) return;
+            /*
+            const smartstateListContainerElement = document.querySelector('#smartstatesListContainer');
+            
+            var options = {
+                valueNames: [ 'name', 'id' ],
+                item: ` <li>
+                            <div class="name"></div>
+                            <div class="id"></div>
+                        </li>`
+            };
+            var userList = new List('smartstatesListContainer', options);
+            */
+
+            const smartstateListElement = document.querySelector('#smartstatelist');
+            if(settings.smartstate)
+            {                                
+                for (const [key, smartstate] of Object.entries(settings.smartstate))
+                {
+                    smartstateListElement.addItem({
+                        name: smartstate.name,
+                        id: smartstate.id,
+                        calctype: smartstate.calctype,
+                        path: smartstate.path
+                    })
+                }                
+            }
+
+            smartstateListElement.addEventListener('selectionChanged', (_event)=>{
+                console.log(_event.detail)
+            })
+            
+
+            
+
+            /*
             $('.value').each(function () {
                 var $key = $(this);
                 var id = $key.attr('id');
@@ -41,12 +94,28 @@
             onChange(false);
             // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             if (M) M.updateTextFields();
+            */
         }
 
-        // This will be called by the admin adapter when the user presses the save button
+        
         function save(callback) {
-            // example: select elements with class=value and build settings object
+            // example: select elements with class=value and build settings object            
             var obj = {};
+
+            obj.smartstate = {}
+            obj.smartstate['kitchen_light_on_counter'] = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', calctype: STATECALCTYPE.COUNT, path: 'lights', function: ''};
+            obj.smartstate['kitchen_light_on_counter'].childs = new Array();
+            obj.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Haupt.values.isOn', function: '' } );
+            obj.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Indirekt.values.isOn', function: '' } );
+            obj.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Insel.values.isOn', function: '' } );
+            obj.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Fotowand.values.isOn', function: '' } );
+            obj.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'openknx.0.Schaltaktor_Dimmaktor.Schalten.Schaltaktor_|_Spots_|_Küche_Abwasch_|_Schalten', function: '' } );
+
+            obj.smartstate['kitchen_light_on'] = { name: 'Küchenlicht an', id: 'kitchen_light_on', calctype: STATECALCTYPE.OR, path: 'lights', function: ''};
+            obj.smartstate['kitchen_light_on'].childs = new Array();
+            obj.smartstate['kitchen_light_on'].childs.push( { type: 'state', id: 'smartstate.0.lights.kitchen_light_on_counter', function: '' } );
+
+            /*
             $('.value').each(function () {
                 var $this = $(this);
                 if ($this.attr('type') === 'checkbox') {
@@ -57,6 +126,7 @@
                     obj[$this.attr('id')] = $this.val();
                 }
             });
+            */
             callback(obj);
         }
     </script>
@@ -75,7 +145,25 @@
 
         <!-- Put your content here -->
 
+        <div class="row">
+            <div class="col s8 m6 l3">
+                <div id="smartstatesListContainer">
+                    <gui-simplelist id="smartstatelist" name="Smart States">
+                        <div>
+                            <div style="min-height: 1em; font-weight: bold; margin-bottom: 7px;">${item.name}</div>
+                            <div style="min-height: 1em; font-size: 0.85em; margin-bottom: 7px;">${item.path ? html`${item.path}.`: ''}${item.id}</div>
+                            <div style="min-height: 1em; font-size: 0.85em;">${item.calctype}</div>
+                        </div>
+                    </gui-simplelist>
+                </div>
+            </div>
+            <div class="col">
+                Details
+            </div>
+        </div>
+        
         <!-- For example columns with settings: -->
+        <!--
         <div class="row">
             <div class="col s6 input-field">
                 <input type="checkbox" class="value" id="option1" />
@@ -87,6 +175,7 @@
                 <label for="option2" class="translate">option2</label>
             </div>
         </div>
+        -->
 
     </div>
 

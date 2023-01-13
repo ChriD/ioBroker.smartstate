@@ -76,9 +76,11 @@ class Smartstate extends utils.Adapter {
                 this.addSubscriptionToForeignState(key, childObject.id);
             }
 
-            // (re)calculate the given smartstate value and set it
+            // create (re)calculate the given smartstate value and set it
             await this.recalculateSmartState(key);
         }
+
+        // TODO: remove smart states
 
         this.calculateStatesInStack();
     }
@@ -322,13 +324,8 @@ class Smartstate extends utils.Adapter {
 
         try
         {
-            const functionString = `function evalFunc(_params){
-                let value;
-                ${_functionPart}
-                return value;
-            }`;
-
-            const evalFunction = new Function (functionString);
+            const functionString = `${_functionPart}`;
+            const evalFunction = new Function ('params', functionString);
             value = evalFunction(_params);
         }
         catch(_error)
