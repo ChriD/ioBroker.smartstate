@@ -8,22 +8,21 @@ class GuiSimpleList extends LitElement {
   static styles = css`
       :host {
         display: block;
-        border: solid 1px gray;
-        padding: 16px;
-        max-width: 800px;
+        max-width: 800px;   
       }
       
       ul {
         list-style-type: none;
         margin: 0;
         padding: 0;
+        height: 100%;
       }
       ul li {
         display: flex;
         align-items: center;        
         padding-bottom: 10px;
         padding-top: 10px;        
-        border-bottom:1px solid green;
+        border-bottom:1px solid red;
       }            
 
       ul li .left {
@@ -33,7 +32,7 @@ class GuiSimpleList extends LitElement {
       }
 
       ul li .right {
-        flex: 0 0 2em;
+        flex: 0 0 3em;
       }
       
       ul li:last-child{        
@@ -60,6 +59,7 @@ class GuiSimpleList extends LitElement {
     this.listData = []
     this.itemTemplate;
     this.currentSelectedIdx = -1;
+    this.previousSelectedIdx = -1;
   }
 
 connectedCallback(_args)
@@ -73,23 +73,25 @@ connectedCallback(_args)
 
   render() {
     return html`
-    <div>
-      <input id="fullname" type="text"><button @click=${() => this.addItem({ name: this._input.value}, true)}>Add</button>
-    </div>
-    <div>
-      <h2>${this.name}</h2>
-      <ul id="list">
-        ${map(this.listData, (listItem, index) => html`
-          <li @click="${this.listItemClicked}" data-index="${index}">
-            <div class="left">
-              ${this.caclulateTemplate(listItem, this.itemTemplate)}
-            </div>
-            <div class="right" itemselectdisabled='true'>
-              <button @click=${() => this.deleteItem(index)} itemselectdisabled='true'>x</button>
-            </div>              
-          </li>
-        `)}
-      </ul>
+    <div style="display: flex; height: 100%; flex-flow: column;">
+      <div style="style="flex: 0 1 auto; margin: 0px;">
+        <input id="fullname" type="text"><button @click=${() => this.addItem({ name: this._input.value}, true)}>Add</button>
+        <h2>${this.name}</h2>
+      </div>
+      <div style="flex: 1 1 auto; overflow: auto;">        
+        <ul id="list">
+          ${map(this.listData, (listItem, index) => html`
+            <li @click="${this.listItemClicked}" data-index="${index}">
+              <div class="left">
+                ${this.caclulateTemplate(listItem, this.itemTemplate)}
+              </div>
+              <div class="right" itemselectdisabled='true'>
+                <button @click=${() => this.deleteItem(index)} itemselectdisabled='true'>x</button>
+              </div>              
+            </li>
+          `)}
+        </ul>
+      </div>
     </div>
     `
   }
@@ -112,19 +114,11 @@ connectedCallback(_args)
       return value;
   }
 
-/*
-  returnString() {
-      var frag = document.createRange().createContextualFragment(`${ this.str }`);
-    return frag;
-  }
-  */
-
-
 
   listItemClicked(_event) {    
     
     // TODO ousource in method
-    
+
     // if we hot on an element which should not trigger selection then skip
     if(_event.target.hasAttribute('itemselectdisabled'))
       return;    
@@ -132,17 +126,32 @@ connectedCallback(_args)
     this.selectListItemFromElement(_event.target);
   }
 
-  selectListItem(_index)
+  selectListItem(_index, _previousIndex = this.currentSelectedIdx)
   {
     if(_index < 0)
     {
+      this.previousSelectedIdx = _previousIndex;
+      this.currentSelectedIdx = -1;
       this.unselectItems();
+      this.dispatchEventSelectionChanged(-1, null);      
       return;
     }
 
     const element = this.shadowRoot.querySelector(`li[data-index="${_index}"]`)
     if(element)    
       this.selectListItemFromElement(element);    
+  }
+
+  getSelectedListItem()
+  {
+    return this.getListItem(this.currentSelectedIdx);
+  }
+
+  getListItem(_index)
+  {
+    if(_index < 0)
+      return null;
+    return this.listData[_index];
   }
 
   unselectItems()
@@ -167,7 +176,7 @@ connectedCallback(_args)
     if(this.currentSelectedIdx != dataIndex)
     {
       this.currentSelectedIdx = dataIndex;
-      this.dispatchEventSelectionChanged(this.listData[dataIndex]);
+      this.dispatchEventSelectionChanged(this.currentSelectedIdx, this.listData[dataIndex]);
     }
   }
 
@@ -184,29 +193,24 @@ connectedCallback(_args)
   async deleteItem(_index) 
   {    
     this.listData = this.listData.filter((_, i) => i !== _index)
+    await this.updateComplete;  
 
-    // update selection
-    // if selected item was delete -> select none
-    // if item after selected item was delete -> do nothing
-    // if item before selected item was delete -> reselect item!
-    let newSelection = this.currentSelectedIdx;
-    if(this.currentSelectedIdx == _index)
-      newSelection = -1;
+    // if we are deleteing the currently marked item, we have no actual selection anymore
+    // and the previouse selection is not applicable too!
+    if(this.currentSelectedIdx == _index)         
+      this.selectListItem(-1, -1); 
+    // if we delete an item which is before the selection, the selection will move down to
+    // stay on the correct item
     else if(this.currentSelectedIdx > _index)
-      newSelection = this.currentSelectedIdx - 1;    
+      this.selectListItem(this.currentSelectedIdx - 1);
 
-    if(newSelection != this.currentSelectedIdx)
-    {
-      await this.updateComplete;
-      this.selectListItem(newSelection);
-    }
   }
 
-  dispatchEventSelectionChanged(_itemData)
+  dispatchEventSelectionChanged(_idx, _itemData, prevIdx = this.previousSelectedIdx , _prevItemData = this.getListItem(this.previousSelectedIdx))
   {
-    const event = new CustomEvent('selectionChanged', {detail: { item: _itemData }, bubbles: true, composed: true });
+    const event = new CustomEvent('selectionChanged', {detail: { idx: _idx, item: _itemData, prevIdx: prevIdx, prevItem: _prevItemData }, bubbles: true, composed: true });
     this.dispatchEvent(event);
-  }
+  } 
 
   get _input() {
     return this.renderRoot?.querySelector("#fullname") ?? null
