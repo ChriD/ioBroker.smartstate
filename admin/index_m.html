@@ -38,25 +38,28 @@
             EQUALS: 'equals'
         };
 
-        function load(settings, onChange) {            
-            if (!settings) return;
-            /*
-            const smartstateListContainerElement = document.querySelector('#smartstatesListContainer');
-            
-            var options = {
-                valueNames: [ 'name', 'id' ],
-                item: ` <li>
-                            <div class="name"></div>
-                            <div class="id"></div>
-                        </li>`
-            };
-            var userList = new List('smartstatesListContainer', options);
-            */
+        let childSettings = {};
+        let onChangeCallback;
 
+        function load(_settings, _onChange)
+        {
+            if (!_settings) 
+                return;
+            
+            settings = _settings;
+            onChangeCallback = _onChange;
+            
+            this.loadSmartStatesList(settings.smartstate);
+            
+            _onChange(false);
+        }
+
+        function loadSmartStatesList(_smartStateList)
+        {
             const smartstateListElement = document.querySelector('#smartstatelist');
-            if(settings.smartstate)
+            if(_smartStateList)
             {                                
-                for (const [key, smartstate] of Object.entries(settings.smartstate))
+                for (const [key, smartstate] of Object.entries(_smartStateList))
                 {
                     smartstateListElement.addItem({
                         name: smartstate.name,
@@ -64,44 +67,132 @@
                         calctype: smartstate.calctype,
                         path: smartstate.path
                     })
+
+                    // TODO: build list for tables
                 }                
             }
-
-            smartstateListElement.addEventListener('selectionChanged', (_event)=>{
-                console.log(_event.detail)
+            smartstateListElement.addEventListener('selectionChanged', (_event)=> {
+                this.smartStateListSelectionChanged(_event.detail);                
             })
-            
+        }
 
-            
 
-            /*
+        function getSettings()
+        {
+            // get the smart state main data from the simple list
+            const smartstateListElement = document.querySelector('#smartstatelist');
+            console.log(smartstateListElement.listData);
+
+            // rebuild the whole settings object when updating
+            const settings = {};
+            settings.smartstate = {};
+
+            for(let idx=0; idx<smartstateListElement.listData.length; idx++)
+            {
+                // TODO: check for mandatory entries
+                let smartStateData = smartstateListElement.listData[idx];
+                settings.smartstate[smartStateData.id] = settings.smartstate[smartStateData.id] ? settings.smartstate[smartStateData.id] : {};
+                settings.smartstate[smartStateData.id].name = smartStateData.name;
+                settings.smartstate[smartStateData.id].id = smartStateData.id ? smartStateData.id : smartStateData.name; // TODO: format
+                settings.smartstate[smartStateData.id].calctype = smartStateData.calctype;
+                settings.smartstate[smartStateData.id].path = smartStateData.path;
+                settings.smartstate[smartStateData.id].function = smartStateData.function;
+
+                // get the child settings from the temporary chils settings object
+                // TODO: @@@
+            }  
+
+            return settings;
+        }
+
+        function smartStateListSelectionChanged(_params)
+        {
+            // list item may be null!
+
+            // get the needed data from the settings object for the selected smart state and fill up the
+            // child states table. If the selection was removed (no item is selected), then we have to 
+            // hide all relevant values for the state
+
+            // get the values from the gui and store it to the given list item index within the list
+            // this.storeSmartStateListValues()
+
+            // load "right side gui" for current selected item
+            this.values2GUISmartState(_params.idx);
+        }
+
+        function values2GUISmartState(_stateIdx)
+        {
+            if(_stateIdx)
+            {
+                const smartstateListElement = document.querySelector('#smartstatelist');
+                object2GUI(smartstateListElement.getListItem(_stateIdx));
+            }
+        }
+
+        function 
+        (_stateIdx)
+        {
+            if(_stateIdx)
+            {
+                const smartstateListElement = document.querySelector('#smartstatelist');
+                GUI2Object(smartstateListElement.getListItem(_stateIdx));
+            }
+        }
+
+        function values2GUISmartStateChild()
+        {
+            
+        }
+
+        function settingsChangedByUser()
+        {
+            const smartstateListElement = document.querySelector('#smartstatelist')
+            GUI2SmartStateValues(smartstateListElement.currentSelectedIdx);       
+            smartstateListElement.requestUpdate();     
+        }
+
+        function GUI2Object(_object)
+        {
+            $('.value').each(function () {
+                var $this = $(this);
+                if ($this.attr('type') === 'checkbox') {
+                    _object[$this.attr('id')] = $this.prop('checked');
+                } else if ($this.attr('type') === 'number') {
+                    _object[$this.attr('id')] = parseFloat($this.val());
+                } else {
+                    _object[$this.attr('id')] = $this.val();
+                }
+            });            
+        }
+
+        function object2GUI(_object)
+        {
             $('.value').each(function () {
                 var $key = $(this);
                 var id = $key.attr('id');
                 if ($key.attr('type') === 'checkbox') {
                     // do not call onChange direct, because onChange could expect some arguments
-                    $key.prop('checked', settings[id])
-                        .on('change', () => onChange())
+                    $key.prop('checked', _object[id])
+                        .on('change', () => { onChangeCallback(); settingsChangedByUser() })
                         ;
                 } else {
                     // do not call onChange direct, because onChange could expect some arguments
-                    $key.val(settings[id])
-                        .on('change', () => onChange())
-                        .on('keyup', () => onChange())
+                    $key.val(_object[id])
+                        .on('change', () => { onChangeCallback(); settingsChangedByUser() })
+                        .on('keyup', () => { onChangeCallback(); })
                         ;
                 }
             });
-            onChange(false);
-            // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             if (M) M.updateTextFields();
-            */
         }
 
+
+        
         
         function save(callback) {
-            // example: select elements with class=value and build settings object            
-            var obj = {};
+            // example: select elements with class=value and build settings object        
 
+            /*
             obj.smartstate = {}
             obj.smartstate['kitchen_light_on_counter'] = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', calctype: STATECALCTYPE.COUNT, path: 'lights', function: ''};
             obj.smartstate['kitchen_light_on_counter'].childs = new Array();
@@ -114,6 +205,7 @@
             obj.smartstate['kitchen_light_on'] = { name: 'Küchenlicht an', id: 'kitchen_light_on', calctype: STATECALCTYPE.OR, path: 'lights', function: ''};
             obj.smartstate['kitchen_light_on'].childs = new Array();
             obj.smartstate['kitchen_light_on'].childs.push( { type: 'state', id: 'smartstate.0.lights.kitchen_light_on_counter', function: '' } );
+            */
 
             /*
             $('.value').each(function () {
@@ -126,29 +218,139 @@
                     obj[$this.attr('id')] = $this.val();
                 }
             });
-            */
-            callback(obj);
+            */            
+            callback(this.getSettings());
         }
     </script>
 
 </head>
 
-<body>
+<body style="overflow: hidden;">
 
     <div class="m adapter-container">
 
+        <div style="display: flex; height: 100%; flex-flow: column;">
+            
+            <div class="row" style="flex: 0 1 auto; margin: 0px;">
+                <div class="col s12 m4 l2">
+                    <img src="smartstate.png" class="logo">
+                </div>
+            </div>
+
+            <div class="settings" style="flex: 1 1 auto; overflow: auto;">        
+                <div class="row" style="height: 100%; margin-bottom: 0px; display: flex;">
+                    <!-- <div class="col s8 m6 l3" style="height: 100%; border-right: 2px solid red; padding: 0px; padding-left: 20px;">-->
+                    <div class="left" style="height: 100%; border-right: 2px solid red; padding: 0px; padding-left: 20px; flex: 0  0 25em">
+                        <div id="smartstatesListContainer" style="display: flex; height: 100%;">
+                            <gui-simplelist id="smartstatelist" name="Smart States" style="width: 100%;">
+                                <div>
+                                    <div style="min-height: 1em; font-weight: bold; margin-bottom: 7px;">${item.name}</div>
+                                    <div style="min-height: 1em; font-size: 0.75em; margin-bottom: 7px;">${item.path ? html`${item.path}.`: ''}${item.id}</div>
+                                    <div style="min-height: 1em; font-size: 0.75em;">${item.calctype}</div>
+                                </div>
+                            </gui-simplelist>
+                        </div>
+                    </div>
+
+                    <div class="right" style="flex: 1">
+                        <div>
+                        Details
+
+                        <div class="row">
+                                <h6 class="translate sub-title">Smartstate Einstellungen [XXXX]</h6>                                
+                                <div class="input-field col s8 m6 l3">
+                                    <input id="name" type="text" class="value" autocomplete="off" />
+                                    <label class="translate" for="name">Name:</label>
+                                </div>
+                                <div class="input-field col s8 m6 l3">
+                                    <input id="id" type="text" class="value" autocomplete="off" />
+                                    <label class="translate" for="id">Id:</label>
+                                </div>
+                                <div class="input-field col s3 m2 l1">
+                                    <input id="calctype" type="number" min="1" max="65565" class="value" />
+                                    <label class="translate" for="calctype">Typ:</label>
+                                </div>
+                                <div class="input-field col s8 m6 l3">
+                                    <input id="path" type="text" class="value" />
+                                    <label class="translate" for="path">Pfad:</label>
+                            </div>
+                        </div>
+
+                        <div class="row">
+
+                            <div class="col">
+                                <a class="btn-floating waves-effect waves-light blue table-button-add"><i class="material-icons">add</i></a>
+                                <div class="table-values-div" id="deviceTable">
+                                    <table class="table-values">
+                                        <thead>
+                                            <tr>
+                                                <th data-name="_index" style="width: 40px" class="translate"></th>                                
+                                                <th data-name="type"  style="min-width: 100px" data-type="select" data-options="STATUS,SELECTOR" class="translate type">Type</th>                                    
+                                                <th data-name="statusid" class="translate" style="min-width: 320px">Status/Selector</th>                                                                                
+                                                <th data-name="function" data-type="string" class="translate channel">Function</th>                                               
+                                                <th data-buttons="delete up down" style="width: 120px"></th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                               
+                        </div>
+                        
+
+                        <!--
+
+                        <div class="row">
+                            <div class="col">
+                                <a class="btn-floating waves-effect waves-light blue table-button-add"><i class="material-icons">add</i></a>
+                                <div class="table-values-div" id="deviceTable">
+                                    <table class="table-values">
+                                        <thead>
+                                            <tr>
+                                                <th data-name="_index" style="width: 40px" class="translate"></th>                                
+                                                <th data-name="name" class="translate" style="min-width: 180px">Name</th>
+                                                <th data-name="deviceId" class="translate" style="min-width: 180px">Id</th>                                
+                                                <th data-name="settings.type"  style="min-width: 100px" data-type="select" data-options="dimmable;TW;RGB;RGBW;RGBTW" class="translate type">Type</th>                                    
+                                                <th data-name="settings.channel.main" data-type="number" class="translate channel">Ch. main</th>
+                                                <th data-name="settings.channel.white" data-type="number" class="translate channel">Ch. white</th>
+                                                <th data-name="settings.channel.red" data-type="number" class="translate channel">Ch. red</th>
+                                                <th data-name="settings.channel.green" data-type="number" class="translate channel">Ch. green</th>
+                                                <th data-name="settings.channel.blue" data-type="number" class="translate channel">Ch. blue</th>
+                                                <th data-name="settings.fadeTime" data-type="number" data-default="-1" class="translate fadeTime">Fade time</th>
+                                                <th data-buttons="delete up down" style="width: 120px"></th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        -->
+
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!--
         <div class="row">
             <div class="col s12 m4 l2">
                 <img src="smartstate.png" class="logo">
             </div>
         </div>
 
-        <!-- Put your content here -->
+        <div class="settings" style="display: flex;">
+                XXX
+        </div>
+        -->
 
+        <!-- Put your content here -->
+        <!--
         <div class="row">
             <div class="col s8 m6 l3">
-                <div id="smartstatesListContainer">
-                    <gui-simplelist id="smartstatelist" name="Smart States">
+                <div id="smartstatesListContainer" style="display: flex;">
+                    <gui-simplelist id="smartstatelist" name="Smart States" style="width: 100%;">
                         <div>
                             <div style="min-height: 1em; font-weight: bold; margin-bottom: 7px;">${item.name}</div>
                             <div style="min-height: 1em; font-size: 0.85em; margin-bottom: 7px;">${item.path ? html`${item.path}.`: ''}${item.id}</div>
@@ -161,6 +363,8 @@
                 Details
             </div>
         </div>
+        -->
+
         
         <!-- For example columns with settings: -->
         <!--
