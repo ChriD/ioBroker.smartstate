@@ -48,6 +48,15 @@
             
             settings = _settings;
             onChangeCallback = _onChange;
+
+            const selectCalcTypeElement = document.getElementById('calctype');
+            for (const [key, value] of Object.entries(STATECALCTYPE))                
+            {
+                let option = document.createElement("option");
+                option.value = value;
+                option.text = value;
+                selectCalcTypeElement.add(option, null);
+            }
             
             this.loadSmartStatesList(settings.smartstate);
             
@@ -128,9 +137,8 @@
                 object2GUI(smartstateListElement.getListItem(_stateIdx));
             }
         }
-
-        function 
-        (_stateIdx)
+        
+        function GUI2SmartStateValues(_stateIdx)
         {
             if(_stateIdx)
             {
@@ -155,6 +163,7 @@
         {
             $('.value').each(function () {
                 var $this = $(this);
+                
                 if ($this.attr('type') === 'checkbox') {
                     _object[$this.attr('id')] = $this.prop('checked');
                 } else if ($this.attr('type') === 'number') {
@@ -165,17 +174,26 @@
             });            
         }
 
+        // TODO: ON event only one time subscribe!!!
         function object2GUI(_object)
         {
             $('.value').each(function () {
                 var $key = $(this);
                 var id = $key.attr('id');
-                if ($key.attr('type') === 'checkbox') {
+
+                if($key.is('select'))
+                {                                 
+                    $("#calctype").val(_object[id]).select();
+                }
+                else if ($key.attr('type') === 'checkbox') 
+                {
                     // do not call onChange direct, because onChange could expect some arguments
                     $key.prop('checked', _object[id])
                         .on('change', () => { onChangeCallback(); settingsChangedByUser() })
                         ;
-                } else {
+                }            
+                else
+                {
                     // do not call onChange direct, because onChange could expect some arguments
                     $key.val(_object[id])
                         .on('change', () => { onChangeCallback(); settingsChangedByUser() })
@@ -267,7 +285,11 @@
                                     <label class="translate" for="id">Id:</label>
                                 </div>
                                 <div class="input-field col s3 m2 l1">
+                                    <!--
                                     <input id="calctype" type="number" min="1" max="65565" class="value" />
+                                    --> 
+                                    <select id="calctype" class="value">
+                                    </select>
                                     <label class="translate" for="calctype">Typ:</label>
                                 </div>
                                 <div class="input-field col s8 m6 l3">
