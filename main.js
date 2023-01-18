@@ -76,7 +76,7 @@ class Smartstate extends utils.Adapter {
             for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
             {
                 const childObject = smartstate.childs[childIdx];
-                this.addSubscriptionToForeignState(key, childObject.id);
+                this.addSubscriptionToForeignState(key, childObject.statusid);
             }
 
             // create (re)calculate the given smartstate value and set it
@@ -241,9 +241,9 @@ class Smartstate extends utils.Adapter {
             for(let childIdx=0; childIdx<smartState.childs.length; childIdx++)
             {
                 const childObject = smartState.childs[childIdx];
-                const state = await this.getForeignStateAsync(childObject.id);
+                const state = await this.getForeignStateAsync(childObject.statusid);
 
-                this.log.debug(`Calculation-Child: ${childObject.id}: ${state.val}`);
+                this.log.debug(`Calculation-Child: ${childObject.statusid}: ${state.val}`);
 
                 let value;
                 if(childObject.function)
