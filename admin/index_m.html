@@ -6,11 +6,18 @@
     <link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
     <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
 
+    <link rel="stylesheet" type="text/css" href="../../lib/css/fancytree/ui.fancytree.min.css"/>
+
     <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
 
     <script type="text/javascript" src="../../js/translate.js"></script>
     <script type="text/javascript" src="../../lib/js/materialize.js"></script>
+
+    <script type="text/javascript" src="../../lib/js/jquery-ui-1.10.3.full.min.js"></script>    
+    <script type="text/javascript" src="../../lib/js/jquery.fancytree-all.min.js"></script>
+    <script type="text/javascript" src="../../lib/js/selectID.js"></script>
+
     <script type="text/javascript" src="../../js/adapter-settings.js"></script>
 
 
@@ -24,6 +31,43 @@
 
     
     <script type="text/javascript">
+
+    var selectId;
+    function initSelectId (cb) {
+        if (selectId) return cb(selectId);
+        socket.emit('getObjects', function (err, res) {
+            if (!err && res) {
+                selectId = $('#dialog-select-member').selectId('init',  {
+                    noMultiselect: true,
+                    objects: res,
+                    imgPath:       '../../lib/css/fancytree/',
+                    filter:        {type: 'state'},
+                    name:          'vcard-select-state',
+                    texts: {
+                        select:          _('Select'),
+                        cancel:          _('Cancel'),
+                        all:             _('All'),
+                        id:              _('ID'),
+                        name:            _('Name'),
+                        role:            _('Role'),
+                        room:            _('Room'),
+                        value:           _('Value'),
+                        selectid:        _('Select ID'),
+                        from:            _('From'),
+                        lc:              _('Last changed'),
+                        ts:              _('Time stamp'),
+                        wait:            _('Processing...'),
+                        ack:             _('Acknowledged'),
+                        selectAll:       _('Select all'),
+                        unselectAll:     _('Deselect all'),
+                        invertSelection: _('Invert selection')
+                    },
+                    columns: ['image', 'name', 'role', 'room']
+                });
+                cb && cb(selectId);
+            }
+        });
+    }
 
         
         //let settings ={}
@@ -71,7 +115,8 @@
                 for (const [key, smartstate] of Object.entries(_smartStateList))
                 {
                     // TODO: build list for tables
-                    childSettings[key] = [{ type: 'STATUS', statusid: 'test'}, { type: 'STATUS', statusid: 'test2'}];
+                    //childSettings[key] = [{ type: 'STATUS', statusid: 'test'}, { type: 'STATUS', statusid: 'test2'}];
+                    childSettings[key] = smartstate.childs;
 
                     smartstateListElement.addItem({
                         name: smartstate.name,
@@ -111,7 +156,8 @@
                 settings.smartstate[smartStateData.id].function = smartStateData.function;
 
                 // get the child settings from the temporary chils settings object
-                // TODO: @@@
+                //settings.smartstate[smartStateData.id].childs = Object.assign({}, childSettings[smartStateData.id]);
+                settings.smartstate[smartStateData.id].childs = JSON.parse(JSON.stringify(childSettings[smartStateData.id]));
             }  
 
             return settings;
@@ -120,6 +166,7 @@
         function smartStateListSelectionChanged(_params)
         {
             // list item may be null!
+            GUI2SmartStateValues(_params.prevIdx);
 
             // get the needed data from the settings object for the selected smart state and fill up the
             // child states table. If the selection was removed (no item is selected), then we have to 
@@ -147,20 +194,25 @@
         
         function GUI2SmartStateValues(_stateIdx)
         {
-            if(_stateIdx)
-            {
+            if(_stateIdx >= 0)
+            {                                
                 const smartstateListElement = document.querySelector('#smartstatelist');
-                GUI2Object(smartstateListElement.getListItem(_stateIdx));
-            }
+                const listItem = smartstateListElement.getListItem(_stateIdx);
+                GUI2Object(listItem);
+
+                childSettings[listItem.id] = table2values('childList');    
+            }                
         }
 
+        /*
         function values2GUISmartStateChild()
         {
             
         }
+        */
 
         function settingsChangedByUser()
-        {
+        {            
             const smartstateListElement = document.querySelector('#smartstatelist')
             GUI2SmartStateValues(smartstateListElement.currentSelectedIdx);       
             smartstateListElement.requestUpdate();     
@@ -217,18 +269,19 @@
         // to some kind of events and to inject a refresh button for the objectId. For this it will iterate the row elements
         function onDeviceTableReady()
         { 
-            /*
-            let deviceTableElement = document.querySelector('#deviceTable');
+            
+            let deviceTableElement = document.querySelector('#childListTable');
             let deviceTableBodyElement = document.querySelector('tbody');
             let rowElements = deviceTableBodyElement.querySelectorAll('tr');
 
             rowElements.forEach(rowElement => {
                 let rowIndex = getTableRowDataIndex(rowElement);
 
+                /*
                 // attach onchange event to the device type so that we can update the channel controls
                 // in relation to the selection
-                let settingsTypeElement = rowElement.querySelector('select[data-name="settings.type"]');
-                settingsTypeElement.onchange = (_event) => {                        
+                let settingsStatusIdElement = rowElement.querySelector('select[data-name="statusid"]');
+                settingsStatusIdElement.onchange = (_event) => {                        
                     let rowIndex = getTableRowDataIndex(_event.currentTarget);
                     updateEditableChannels(rowIndex);
                 }
@@ -240,26 +293,41 @@
                     let rowIndex = getTableRowDataIndex(_event.target);
                     updateObjectId(rowIndex, _event.target.value);
                 }
+                */
 
-                // inject the 'update objectId' button for refershing the object id from the device name
-                let deviceIdElement = rowElement.querySelector('input[data-name="deviceId"]');
+                // inject the 'select objectId' button for lookup on existing object idse
+                // TODO: make omnly visible for type status
+
+                let deviceIdElement = rowElement.querySelector('input[data-name="statusid"]');
                 let columnElement = deviceIdElement.parentElement;                
                 var input = document.createElement("i");
                 input.classList.add('material-icons');
-                input.setAttribute("data-name", "deviceIdUpdate");
+                input.setAttribute("data-name", "statusidLookup");
                 input.innerHTML = 'refresh';
                 let deviceIdUpdateButtonElement = columnElement.appendChild(input);                
                 deviceIdUpdateButtonElement.onclick = (_event) => {                        
                     let rowIndex = getTableRowDataIndex(_event.target);
-                    updateObjectId(rowIndex, settingsNameElement.value, true);
+                                        
+                        initSelectId(function (sid) {                            
+                            sid.selectId('show', $('#childListTable .values-input[data-name="statusid"][data-index="' + rowIndex + '"]').val(), function (newId) {
+                                if (newId) {
+                                    $('#childListTable .values-input[data-name="statusid"][data-index="' + rowIndex + '"]').val(newId).trigger('change');
+                                }
+                            });
+                        });
                 }
-
-                // enable/disable the channel controls for the given row index
-                updateEditableChannels(rowIndex);
-            });      
-            */     
+            });                  
         }
         
+        // this function will get the row index for an element which is within the device grid or for the row 
+        // element itself
+        function getTableRowDataIndex(_childOrRowElement)
+        {
+            let rowElement = _childOrRowElement.tagName instanceof HTMLTableRowElement ? _childOrRowElement : _childOrRowElement.closest('tr');
+            if(rowElement)
+                return rowElement.getAttribute('data-index');
+            return '';
+        }
         
         function save(callback) {         
             callback(this.getSettings());
@@ -324,9 +392,9 @@
 
                         <div class="row">
 
-                            <div class="col">
+                            <div class="col" id="childList">
                                 <a class="btn-floating waves-effect waves-light blue table-button-add"><i class="material-icons">add</i></a>
-                                <div class="table-values-div" id="childList">
+                                <div class="table-values-div" id="childListTable">
                                     <table class="table-values">
                                         <thead>
                                             <tr>
@@ -339,38 +407,7 @@
                                         </thead>
                                     </table>
                                 </div>
-                            </div>
-                               
-                      
-                        
-
-                        <!--
-
-                        <div class="row">
-                            <div class="col">
-                                <a class="btn-floating waves-effect waves-light blue table-button-add"><i class="material-icons">add</i></a>
-                                <div class="table-values-div" id="deviceTable">
-                                    <table class="table-values">
-                                        <thead>
-                                            <tr>
-                                                <th data-name="_index" style="width: 40px" class="translate"></th>                                
-                                                <th data-name="name" class="translate" style="min-width: 180px">Name</th>
-                                                <th data-name="deviceId" class="translate" style="min-width: 180px">Id</th>                                
-                                                <th data-name="settings.type"  style="min-width: 100px" data-type="select" data-options="dimmable;TW;RGB;RGBW;RGBTW" class="translate type">Type</th>                                    
-                                                <th data-name="settings.channel.main" data-type="number" class="translate channel">Ch. main</th>
-                                                <th data-name="settings.channel.white" data-type="number" class="translate channel">Ch. white</th>
-                                                <th data-name="settings.channel.red" data-type="number" class="translate channel">Ch. red</th>
-                                                <th data-name="settings.channel.green" data-type="number" class="translate channel">Ch. green</th>
-                                                <th data-name="settings.channel.blue" data-type="number" class="translate channel">Ch. blue</th>
-                                                <th data-name="settings.fadeTime" data-type="number" data-default="-1" class="translate fadeTime">Fade time</th>
-                                                <th data-buttons="delete up down" style="width: 120px"></th>
-                                            </tr>
-                                        </thead>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        -->
+                            </div>                                                
 
 
                     </div>
@@ -426,6 +463,7 @@
             </div>
         </div>
         -->
+        <div id="dialog-select-member" style="display:none"></div>
 
     </div>
 

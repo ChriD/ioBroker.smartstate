@@ -30,6 +30,29 @@ label > i[title] {
 }
 
 /* Add your styles here */
+
+.table-button-add {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+
+input[data-name="statusid"] {
+    width: 200px;
+    height: 20px;
+    padding-right: 50px;
+}
+
+i[data-name="statusidLookup"] {
+    position: absolute;
+    margin-left: -25px;
+    margin-top: 3px;
+    border: 0;
+    -webkit-appearance: none;
+}
+
+
+
 .list {
     font-family:sans-serif;
     margin:0;

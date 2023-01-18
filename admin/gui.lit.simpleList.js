@@ -127,7 +127,7 @@ connectedCallback(_args)
   }
 
   selectListItem(_index, _previousIndex = this.currentSelectedIdx)
-  {
+  {    
     if(_index < 0)
     {
       this.previousSelectedIdx = _previousIndex;
@@ -175,6 +175,7 @@ connectedCallback(_args)
     let dataIndex = styleTarget.getAttribute('data-index')
     if(this.currentSelectedIdx != dataIndex)
     {
+      this.previousSelectedIdx = this.currentSelectedIdx;
       this.currentSelectedIdx = dataIndex;
       this.dispatchEventSelectionChanged(this.currentSelectedIdx, this.listData[dataIndex]);
     }
