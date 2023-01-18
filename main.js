@@ -41,6 +41,7 @@ class Smartstate extends utils.Adapter {
     async onReady()
     {
         // temporary configuration for testing
+        /*
         this.config.smartstate = {};
         this.config.smartstate['kitchen_light_on_counter'] = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', calctype: STATECALCTYPE.COUNT, path: 'lights', function: ''};
         this.config.smartstate['kitchen_light_on_counter'].childs = new Array();
@@ -53,14 +54,16 @@ class Smartstate extends utils.Adapter {
         this.config.smartstate['kitchen_light_on'] = { name: 'Küchenlicht an', id: 'kitchen_light_on', calctype: STATECALCTYPE.OR, path: 'lights', function: ''};
         this.config.smartstate['kitchen_light_on'].childs = new Array();
         this.config.smartstate['kitchen_light_on'].childs.push( { type: 'state', id: 'smartstate.0.lights.kitchen_light_on_counter', function: '' } );
+        */
 
         // TODO: create all states with default values so subscription will work????
+        this.log.error(JSON.stringify(this.config.smartstate));
 
         // build subscriptions from the configuration
         for (const [key, smartstate] of Object.entries(this.config.smartstate))
         {
             // add state if not there
-            this.log.info(`Erstelle status ${key}: ${JSON.stringify(smartstate)}`);
+            this.log.info(`Create state ${key}: ${JSON.stringify(smartstate)}`);
 
             // build the tree for the state if necessary
             if(smartstate.path){
@@ -313,7 +316,7 @@ class Smartstate extends utils.Adapter {
         }
         catch(_error)
         {
-            this.log.error(`Recalculating od smartstate ${_smartStateId} failed: ${_error.toString()}`);
+            this.log.error(`Recalculation of smartstate ${_smartStateId} failed: ${_error.toString()}`);
         }
     }
 
