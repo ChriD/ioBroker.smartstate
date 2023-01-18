@@ -57,7 +57,6 @@ class Smartstate extends utils.Adapter {
         */
 
         // TODO: create all states with default values so subscription will work????
-        this.log.error(JSON.stringify(this.config.smartstate));
 
         // build subscriptions from the configuration
         for (const [key, smartstate] of Object.entries(this.config.smartstate))
@@ -80,10 +79,26 @@ class Smartstate extends utils.Adapter {
             }
 
             // create (re)calculate the given smartstate value and set it
+            // the method will create the state if it's not already there
             await this.recalculateSmartState(key);
         }
 
-        // TODO: remove smart states
+        // TODO: remove smart states which are not mentioned in the configuration
+
+        const states = await this.getStatesOfAsync();
+        for (const state of states)
+        {
+            // check if the state is defined in the configuration
+
+            // TODO: make better
+            //let id = this.config.smartstate.path + '.' + this.config.smartstate.id;
+            //const deviceId = (deviceObject._id).split('.').pop();
+            //if(_deviceIds.includes(deviceId) == false)
+            //{
+            //    await this.delStateAsync(deviceObject._id);
+            //    await this.delObjectAsync(deviceObject._id, {recursive: true});
+            //}
+        }
 
         this.calculateStatesInStack();
     }
