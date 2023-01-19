@@ -86,18 +86,18 @@ class Smartstate extends utils.Adapter {
         // TODO: remove smart states which are not mentioned in the configuration
 
         const states = await this.getStatesOfAsync();
+        this.log.warn(JSON.stringify(states));
         for (const state of states)
         {
-            // check if the state is defined in the configuration
-
-            // TODO: make better
-            //let id = this.config.smartstate.path + '.' + this.config.smartstate.id;
-            //const deviceId = (deviceObject._id).split('.').pop();
-            //if(_deviceIds.includes(deviceId) == false)
-            //{
-            //    await this.delStateAsync(deviceObject._id);
-            //    await this.delObjectAsync(deviceObject._id, {recursive: true});
-            //}
+            const smartstateId = (state._id).split('.').pop();
+            // check if the state is defined in the configuration. The smartstate id has to be unique within the
+            // smartstate adapter instance
+            this.log.warn(smartstateId);
+            if(!this.config.smartstate[smartstateId])
+            {
+                await this.delStateAsync(state._id);
+                await this.delObjectAsync(state._id, {recursive: true});
+            }
         }
 
         this.calculateStatesInStack();
