@@ -3,14 +3,12 @@
 <head>
 
     <!--
-        TODO:
-            * INIT Id from name if empty
-            * choose better selector icon
+        TODO:            
             * make overflow of id hidden
-            * be sure to save current selected child and state values when saving
             * disable selector icon if not of type state
             * do not allow '.' in smart state ids
             * check for duplicate ids
+            * validate fields (for name, id, type)
     -->
 
     <!-- Load ioBroker scripts and styles-->
@@ -114,8 +112,53 @@
             }
             
             this.loadSmartStatesList(settings.smartstate);
+
+            //
+            // when the name of the device was changed we will update the object id for that device
+            // given the id is empty.
+            let settingsNameElement = document.querySelector('#name');           
+            settingsNameElement.onblur = (_event) => {
+                updateIdFromName(_event.target.value); 
+            }
+
+            let idRefreshElement = document.querySelector('#idRefresh');           
+            idRefreshElement.onclick = (_event) => {
+                const smartstateListElement = document.querySelector('#smartstatelist'); 
+                updateIdFromName(smartstateListElement.getSelectedListItem().name, true);
+            }            
             
             _onChange(false);
+        }
+
+
+        function updateIdFromName(_name, _force = false)
+        {
+            let settingsIdElement = document.querySelector('#id');
+            if(!settingsIdElement.value || _force)
+            {            
+                $(settingsIdElement).val(formatObjectId(_name));
+                if (M) M.updateTextFields();
+            }
+        }
+
+        
+        // this function will format a string (in this case the name of the device) to a valid object id which can be used 
+        // in the backend. The format will be done in the adapter backend because there we have 'FORBIDDEN_CHARS' available
+        function formatObjectId(_value)
+        {    
+            //FORBIDDEN_CHARS of iobroker: [^._\-/ :!#$%&()+=@^{}|~\p{Ll}\p{Lu}\p{Nd}]+
+            //const forbiddenChars = RegExp(/[^._\-/ :!#$%&()+=@^{}|~\p{Ll}\p{Lu}\p{Nd}]/);
+            let validObjectId = _value.replace(/ä/g, 'ae');
+            validObjectId = validObjectId.replace(/ö/g, 'oe');
+            validObjectId = validObjectId.replace(/ü/g, 'ue');
+            validObjectId = validObjectId.replace(/ß/g, 'ss');
+            validObjectId = validObjectId.replace(/Ä/g, 'Ae');
+            validObjectId = validObjectId.replace(/Ö/g, 'Oe;');
+            validObjectId = validObjectId.replace(/Ü/g, 'Ue;');
+            validObjectId = validObjectId.replace(/[^\w\s]/gi, '')
+            validObjectId = validObjectId.replace(/[\.\s\/]/g, '_');
+            
+            return validObjectId;  
         }
 
         function loadSmartStatesList(_smartStateList)
@@ -139,17 +182,28 @@
                     
                 }                
             }
+
             smartstateListElement.addEventListener('selectionChanged', (_event)=> {
-                this.smartStateListSelectionChanged(_event.detail);                
+                this.smartStateListSelectionChanged(_event.detail);
+            })
+            
+            smartstateListElement.addEventListener('itemDeleted', (_event)=> {
+                onChangeCallback();
+            })
+
+            smartstateListElement.addEventListener('itemAdded', (_event)=> {
+                updateIdFromName(_event.detail.item.name);                
             })
         }
 
 
         function getSettings()
-        {
+        {                        
             // get the smart state main data from the simple list
-            const smartstateListElement = document.querySelector('#smartstatelist');
-            console.log(smartstateListElement.listData);
+            const smartstateListElement = document.querySelector('#smartstatelist');   
+            
+            // be sure the values of the current selected items are stored correctly
+            GUI2SmartStateValues(smartstateListElement.currentSelectedIdx); 
 
             // rebuild the whole settings object when updating
             const settings = {};
@@ -167,7 +221,7 @@
                 settings.smartstate[smartStateData.id].function = smartStateData.function;
                 settings.smartstate[smartStateData.id].objectId = (smartStateData.path ? smartStateData.path + '.' : '') + settings.smartstate[smartStateData.id].id;
 
-                // get the child settings from the temporary chils settings object
+                // get the child settings from the temporary childs settings object
                 //settings.smartstate[smartStateData.id].childs = Object.assign({}, childSettings[smartStateData.id]);
                 settings.smartstate[smartStateData.id].childs = JSON.parse(JSON.stringify(childSettings[smartStateData.id]));
             }  
@@ -297,7 +351,9 @@
                     let rowIndex = getTableRowDataIndex(_event.currentTarget);
                     updateEditableChannels(rowIndex);
                 }
+                */
 
+                /*
                 // when the name of the device was changed we will update the object id for that device
                 // given the id is empty.
                 let settingsNameElement = rowElement.querySelector('input[data-name="name"]');
@@ -306,18 +362,18 @@
                     updateObjectId(rowIndex, _event.target.value);
                 }
                 */
+                
 
-                // inject the 'select objectId' button for lookup on existing object idse
+                // inject the 'select objectId' button for lookup on existing object id's
                 // TODO: make only visible for type status
-
                 let deviceIdElement = rowElement.querySelector('input[data-name="statusid"]');
                 let columnElement = deviceIdElement.parentElement;                
                 var input = document.createElement("i");
                 input.classList.add('material-icons');
                 input.setAttribute("data-name", "statusidLookup");
-                input.innerHTML = 'refresh';
+                input.innerHTML = 'folder_open';
                 let deviceIdUpdateButtonElement = columnElement.appendChild(input);                
-                deviceIdUpdateButtonElement.onclick = (_event) => {                        
+                deviceIdUpdateButtonElement.onclick = (_event) => {
                     let rowIndex = getTableRowDataIndex(_event.target);
                                         
                         initSelectId(function (sid) {                            
@@ -386,7 +442,8 @@
                             </div>
                             <div class="input-field col s8 m6 l3">
                                 <input id="id" type="text" class="value" autocomplete="off" />
-                                <label class="translate" for="id">Id:</label>
+                                <label class="translate" for="id">Id:</label>                                
+                                <i class="material-icons" id="idRefresh">refresh</i>
                             </div>
                             <div class="input-field col s3 m2 l1">
                                 <!--

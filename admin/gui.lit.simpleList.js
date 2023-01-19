@@ -188,11 +188,13 @@ connectedCallback(_args)
     // TODO: select new created state with id....
     this.requestUpdate();
     await this.updateComplete;
-    this.selectListItem(this.listData.length - 1);        
+    this.selectListItem(this.listData.length - 1);     
+    this.dispatchEventItemAdded(this.listData.length - 1, _itemData);
   }
 
   async deleteItem(_index) 
   {    
+    const savedItemData = Object.assign({}, this.getListItem());
     this.listData = this.listData.filter((_, i) => i !== _index)
     await this.updateComplete;  
 
@@ -205,11 +207,25 @@ connectedCallback(_args)
     else if(this.currentSelectedIdx > _index)
       this.selectListItem(this.currentSelectedIdx - 1);
 
+    // let the user know that an item was deleted
+    this.dispatchEventItemDeleted(savedItemData);
   }
 
   dispatchEventSelectionChanged(_idx, _itemData, prevIdx = this.previousSelectedIdx , _prevItemData = this.getListItem(this.previousSelectedIdx))
   {
     const event = new CustomEvent('selectionChanged', {detail: { idx: _idx, item: _itemData, prevIdx: prevIdx, prevItem: _prevItemData }, bubbles: true, composed: true });
+    this.dispatchEvent(event);
+  } 
+
+  dispatchEventItemDeleted(_itemData)
+  {
+    const event = new CustomEvent('itemDeleted', {detail: { item: _itemData }, bubbles: true, composed: true });
+    this.dispatchEvent(event);
+  } 
+
+  dispatchEventItemAdded(_idx, _itemData)
+  {
+    const event = new CustomEvent('itemAdded', {detail: { idx: _idx, item: _itemData }, bubbles: true, composed: true });
     this.dispatchEvent(event);
   } 
 

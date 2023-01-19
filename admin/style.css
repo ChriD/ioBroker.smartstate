@@ -51,6 +51,14 @@ i[data-name="statusidLookup"] {
     -webkit-appearance: none;
 }
 
+#idRefresh {
+    position: absolute;
+    margin-left: -25px;
+    bottom: 20px;
+    border: 0;
+    -webkit-appearance: none;
+}
+
 
 
 .list {

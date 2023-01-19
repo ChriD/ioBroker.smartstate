@@ -40,22 +40,6 @@ class Smartstate extends utils.Adapter {
      */
     async onReady()
     {
-        // temporary configuration for testing
-        /*
-        this.config.smartstate = {};
-        this.config.smartstate['kitchen_light_on_counter'] = { name: 'Küchenlicht an Zähler', id: 'kitchen_light_on_counter', calctype: STATECALCTYPE.COUNT, path: 'lights', function: ''};
-        this.config.smartstate['kitchen_light_on_counter'].childs = new Array();
-        this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Haupt.values.isOn', function: '' } );
-        this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Indirekt.values.isOn', function: '' } );
-        this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Insel.values.isOn', function: '' } );
-        this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'artnetdmx.0.lights.Kueche_Fotowand.values.isOn', function: '' } );
-        this.config.smartstate['kitchen_light_on_counter'].childs.push( { type: 'state', id: 'openknx.0.Schaltaktor_Dimmaktor.Schalten.Schaltaktor_|_Spots_|_Küche_Abwasch_|_Schalten', function: '' } );
-
-        this.config.smartstate['kitchen_light_on'] = { name: 'Küchenlicht an', id: 'kitchen_light_on', calctype: STATECALCTYPE.OR, path: 'lights', function: ''};
-        this.config.smartstate['kitchen_light_on'].childs = new Array();
-        this.config.smartstate['kitchen_light_on'].childs.push( { type: 'state', id: 'smartstate.0.lights.kitchen_light_on_counter', function: '' } );
-        */
-
         // TODO: create all states with default values so subscription will work????
         const smartStatesCreatedOrUpdated = new Array();
 
@@ -84,7 +68,7 @@ class Smartstate extends utils.Adapter {
             await this.recalculateSmartState(key);
 
             // store full object/stateIds for the created states for cleanup process
-            smartStatesCreatedOrUpdated.push(this.namespace + '.' + (smartstate.path ? smartstate.path + '.' : '.') + key);          
+            smartStatesCreatedOrUpdated.push(this.namespace + '.' + (smartstate.path ? smartstate.path + '.' : '.') + key);
         }
 
         // TODO: remove smart states which are not mentioned in the configuration
