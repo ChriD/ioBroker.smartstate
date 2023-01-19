@@ -161,10 +161,11 @@
                 let smartStateData = smartstateListElement.listData[idx];
                 settings.smartstate[smartStateData.id] = settings.smartstate[smartStateData.id] ? settings.smartstate[smartStateData.id] : {};
                 settings.smartstate[smartStateData.id].name = smartStateData.name;
-                settings.smartstate[smartStateData.id].id = smartStateData.id ? smartStateData.id : smartStateData.name; // TODO: format
+                settings.smartstate[smartStateData.id].id = smartStateData.id;
                 settings.smartstate[smartStateData.id].calctype = smartStateData.calctype;
                 settings.smartstate[smartStateData.id].path = smartStateData.path;
                 settings.smartstate[smartStateData.id].function = smartStateData.function;
+                settings.smartstate[smartStateData.id].objectId = (smartStateData.path ? smartStateData.path + '.' : '') + settings.smartstate[smartStateData.id].id;
 
                 // get the child settings from the temporary chils settings object
                 //settings.smartstate[smartStateData.id].childs = Object.assign({}, childSettings[smartStateData.id]);

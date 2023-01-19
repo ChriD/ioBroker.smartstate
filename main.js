@@ -57,6 +57,7 @@ class Smartstate extends utils.Adapter {
         */
 
         // TODO: create all states with default values so subscription will work????
+        const smartStatesCreatedOrUpdated = new Array();
 
         // build subscriptions from the configuration
         for (const [key, smartstate] of Object.entries(this.config.smartstate))
@@ -81,19 +82,20 @@ class Smartstate extends utils.Adapter {
             // create (re)calculate the given smartstate value and set it
             // the method will create the state if it's not already there
             await this.recalculateSmartState(key);
+
+            // store full object/stateIds for the created states for cleanup process
+            smartStatesCreatedOrUpdated.push(this.namespace + '.' + (smartstate.path ? smartstate.path + '.' : '.') + key);          
         }
 
         // TODO: remove smart states which are not mentioned in the configuration
 
         const states = await this.getStatesOfAsync();
-        this.log.warn(JSON.stringify(states));
+        this.log.warn(JSON.stringify(smartStatesCreatedOrUpdated));
         for (const state of states)
         {
-            const smartstateId = (state._id).split('.').pop();
             // check if the state is defined in the configuration. The smartstate id has to be unique within the
             // smartstate adapter instance
-            this.log.warn(smartstateId);
-            if(!this.config.smartstate[smartstateId])
+            if(smartStatesCreatedOrUpdated.includes(state._id) == false)
             {
                 await this.delStateAsync(state._id);
                 await this.delObjectAsync(state._id, {recursive: true});
