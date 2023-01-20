@@ -1,39 +1,34 @@
 <html>
-
 <head>
 
     <!--
-        TODO:            
+        TODO:        
+            * logo    
+            * init 'typ'
             * make overflow of id hidden
             * do not allow '.' in smart state ids            
-            * validate fields (for name, id, type)
             * visuals
-            * check state uses state
-            * code beautify
+            * check if we can use a smartstate as state            
+            * code beautify (sub files)
+            * TODOS
             * functions
     -->
 
     <!-- Load ioBroker scripts and styles-->
     <link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
     <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
-
     <link rel="stylesheet" type="text/css" href="../../lib/css/fancytree/ui.fancytree.min.css"/>
 
     <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
-
     <script type="text/javascript" src="../../js/translate.js"></script>
     <script type="text/javascript" src="../../lib/js/materialize.js"></script>
-
     <script type="text/javascript" src="../../lib/js/jquery-ui-1.10.3.full.min.js"></script>    
     <script type="text/javascript" src="../../lib/js/jquery.fancytree-all.min.js"></script>
     <script type="text/javascript" src="../../lib/js/selectID.js"></script>
-
     <script type="text/javascript" src="../../js/adapter-settings.js"></script>
-
-
     
-
+    <!-- Load adapter specific scripts and styles-->
     <script src="libs/lit/gui.lit.simpleList.js" type="module"></script>
     <script src="libs/awesome-notifications/modern.var.js" type="text/javascript"></script>
     <script src="libs/common/common.js" type="text/javascript"></script>  
@@ -41,9 +36,7 @@
     <script src="words.js" type="text/javascript"></script>
 
     <link rel="stylesheet" type="text/css" href="libs/awesome-notifications/style.css" />
-    <link rel="stylesheet" type="text/css" href="style.css" />
-        
-
+    <link rel="stylesheet" type="text/css" href="style.css" />        
     
     <script type="text/javascript">
 
@@ -117,8 +110,15 @@
             idRefreshElement.onclick = (_event) => {
                 const smartstateListElement = document.querySelector('#smartstatelist'); 
                 updateIdFromName(smartstateListElement.getSelectedListItem().name, true);                
-            }            
+            }     
             
+            // register some change events to know whats happening
+            // yes this we can do dynamically, but for this load i'll take it manually
+            $('#name').on('change', () => { onChangeCallback(); settingsChangedByUser() });
+            $('#id').on('change', () => { onChangeCallback(); settingsChangedByUser() })
+            $('#path').on('change', () => { onChangeCallback(); settingsChangedByUser() })
+            $('#calctype').on('change', () => { onChangeCallback(); settingsChangedByUser() })                      
+                       
             // be sure the save buttons are disabled after loading the configuration/settings
             _onChange(false);
         }
@@ -184,26 +184,31 @@
         }
 
 
-
+        // this method will build a saveable configuration/settings object from the data given in the gui
+        // (list, input values, tables, ...) and from the data caches
         function getSettings()
-        {                        
-            // get the smart state main data from the simple list
+        {                                    
             const smartstateListElement = document.querySelector('#smartstatelist');   
             
-            // be sure the values of the current selected items are stored correctly
+            // be sure the values of the current selected items are stored correctly, so we force an update
+            // to copy the current gui values to the cache and list
             GUI2SmartStateValues(smartstateListElement.currentSelectedIdx); 
-
-            // rebuild the whole settings object when updating
+            
             const settings = {};
             settings.smartstate = {};
 
             for(let idx=0; idx<smartstateListElement.listData.length; idx++)
-            {
-                
-
-                // TODO: check for mandatory entries
+            {                
                 const smartStateData = smartstateListElement.listData[idx];     
                 const smartStateObjectId = buildObjectIdFromSmartStateObject(smartStateData);
+
+                // check for some mandatory entries like id, name and type
+                if(!smartStateData.name)
+                    throw Error(`Name is not allowed to be empty on state: ${smartStateData.id}`);
+                if(!smartStateData.id)
+                    throw Error(`ID is not allowed to be empty on state: ${smartStateData.name}`);
+                if(!smartStateData.calctype)
+                    throw Error(`Type is not allowed to be empty on state: ${smartStateData.id}`);                    
 
                 // if ID already exists we have to throw an error, id duplicates are not allowed
                 if(settings.smartstate[smartStateObjectId])                                                                            
@@ -225,25 +230,27 @@
             return settings;
         }
 
+
+        // this method will be called whenever the user, or any action, will change the selection 
+        // on the smart state list
         function smartStateListSelectionChanged(_params)
         {
-            // list item may be null!
+            // when a new item was selected, we have to copy the current gui data to the previouse
+            // selected item if there was a previous selected one (if idx >=0). The 'GUI2SmartStateValues'
+            // will handle that 
             GUI2SmartStateValues(_params.prevIdx);
 
-            // get the needed data from the settings object for the selected smart state and fill up the
-            // child states table. If the selection was removed (no item is selected), then we have to 
-            // hide all relevant values for the state
-
-            // get the values from the gui and store it to the given list item index within the list
-            // this.storeSmartStateListValues()
-
-            // load "right side gui" for current selected item
-            this.values2GUISmartState(_params.idx);
+            // after we have saved the data which was shown on the gui we can fill the GUI with the data
+            // of the new selected item. This will update the child list too
+            values2GUISmartState(_params.idx);
         }
 
+
+        // this method copies the data (inclusive child table values) from the selected item index to
+        // the GUI. It's the opposite of 'GUI2SmartStateValues'
         function values2GUISmartState(_stateIdx)
         {
-            if(_stateIdx)
+            if(_stateIdx >= 0)
             {
                 const smartstateListElement = document.querySelector('#smartstatelist');
                 const listItem = smartstateListElement.getListItem(_stateIdx);
@@ -255,6 +262,9 @@
             }
         }
         
+
+        // this method copies the current gui settings to the item for the specified index
+        // the child cache data for the table will also be updated. It's the opposite of 'values2GUISmartState'
         function GUI2SmartStateValues(_stateIdx)
         {
             if(_stateIdx >= 0)
@@ -268,11 +278,16 @@
             }                
         }
 
+        // this method will create some kind of object id which we can use for identifying a smartstate
+        // we use this so we can have same names of smartstates when the path differs
         function buildObjectIdFromSmartStateObject(_object)
         {
             return  (_object.path ? _object.path + '.' : '') +_object.id;
         }
 
+
+        // this method is beeing called (should be called) when the user has changed some 'main' (not child)
+        // settings. In this case we copy the change directly into the list item object and update the list
         function settingsChangedByUser()
         {            
             const smartstateListElement = document.querySelector('#smartstatelist')
@@ -280,95 +295,49 @@
             smartstateListElement.requestUpdate();     
         }
 
-        function GUI2Object(_object)
-        {
-            $('.value').each(function () {
-                var $this = $(this);
-                
-                if ($this.attr('type') === 'checkbox') {
-                    _object[$this.attr('id')] = $this.prop('checked');
-                } else if ($this.attr('type') === 'number') {
-                    _object[$this.attr('id')] = parseFloat($this.val());
-                } else {
-                    _object[$this.attr('id')] = $this.val();
-                }
-            });            
-        }
-
-        // TODO: ON event only one time subscribe!!!
-        function object2GUI(_object)
-        {
-            $('.value').each(function () {
-                var $key = $(this);
-                var id = $key.attr('id');
-
-                if($key.is('select'))
-                {                                 
-                    $("#calctype").val(_object[id]).select();
-                    $("#calctype").on('change', () => { onChangeCallback(); settingsChangedByUser() })
-                }
-                else if ($key.attr('type') === 'checkbox') 
-                {
-                    // do not call onChange direct, because onChange could expect some arguments
-                    $key.prop('checked', _object[id])
-                        .on('change', () => { onChangeCallback(); settingsChangedByUser() })
-                        ;
-                }            
-                else
-                {
-                    // do not call onChange direct, because onChange could expect some arguments
-                    $key.val(_object[id])
-                        .on('change', () => { onChangeCallback(); settingsChangedByUser() })
-                        .on('keyup', () => { onChangeCallback(); })
-                        ;
-                }
-            });
-            if (M) M.updateTextFields();
-        }
-
-
+        
         // this method will be called if the html table was built and filled with data. We will use this method to attach
-        // to some kind of events and to inject a refresh button for the objectId. For this it will iterate the row elements
+        // to some kind of events and to inject a button to the state field.
         function onDeviceTableReady()
-        { 
-            
+        {             
             let deviceTableElement = document.querySelector('#childListTable');
             let deviceTableBodyElement = document.querySelector('tbody');
             let rowElements = deviceTableBodyElement.querySelectorAll('tr');
 
             rowElements.forEach(rowElement => {
-                let rowIndex = getTableRowDataIndex(rowElement);
 
-            
-                // attach onchange event to the device type so that we can update the channel controls
-                // in relation to the selection
+                // attach onchange event to the smartstate type so that we can update some gui stuff
+                // when the user changes the value. In this case we want to update the visibility of
+                // the state selector icon
                 let settingsChildTypeElement = rowElement.querySelector('select[data-name="type"]');
                 settingsChildTypeElement.onchange = (_event) => {                        
                     let rowIndex = getTableRowDataIndex(_event.currentTarget);
                     updateStateIdSelectorVisibility(rowIndex);
                 }            
 
-                // inject the 'select objectId' button for lookup on existing object id's
-                // TODO: make only visible for type status
-                let deviceIdElement = rowElement.querySelector('input[data-name="statusid"]');
-                let columnElement = deviceIdElement.parentElement;                
-                var input = document.createElement("i");
-                input.classList.add('material-icons');
-                input.setAttribute("data-name", "statusidLookup");
-                input.innerHTML = 'folder_open';
-                let deviceIdUpdateButtonElement = columnElement.appendChild(input);                
+                // inject the 'select objectId' button for lookup on existing object id's. This icon
+                // will behave as a button and will allow the user to open a state selection dialog                
+                const columnElement = rowElement.querySelector('input[data-name="statusid"]').parentElement;                                
+                let iElement = document.createElement("i");
+                iElement.classList.add('material-icons');
+                iElement.setAttribute("data-name", "statusidLookup");
+                iElement.innerHTML = 'folder_open';
+                let deviceIdUpdateButtonElement = columnElement.appendChild(iElement);                
                 deviceIdUpdateButtonElement.onclick = (_event) => {
+                    // when the icon is beeing clicked we have to init the state selection dialog and
+                    // handle it's return value if beeing closed with 'OK'.
                     let rowIndex = getTableRowDataIndex(_event.target);
-                                        
-                        initSelectId(function (sid) {                            
-                            sid.selectId('show', $('#childListTable .values-input[data-name="statusid"][data-index="' + rowIndex + '"]').val(), function (newId) {
-                                if (newId) {
-                                    $('#childListTable .values-input[data-name="statusid"][data-index="' + rowIndex + '"]').val(newId).trigger('change');
-                                }
-                            });
+                    initSelectId(function (sid) {
+                        sid.selectId('show', $('#childListTable .values-input[data-name="statusid"][data-index="' + rowIndex + '"]').val(), function (newId) {
+                            if (newId) {
+                                $('#childListTable .values-input[data-name="statusid"][data-index="' + rowIndex + '"]').val(newId).trigger('change');
+                            }
                         });
+                    });
                 }
-
+                
+                // the initial visibilty of the icon for opening the state selection dialog has to be set                
+                let rowIndex = getTableRowDataIndex(rowElement);
                 updateStateIdSelectorVisibility(rowIndex);
             });                  
         }
@@ -387,22 +356,7 @@
             const isVisible = typeElement.value == 'STATUS' ? true : false;
             const lookupIcon = rowElement.querySelector('i[data-name="statusidLookup"');
             lookupIcon.style.visibility = (isVisible ? 'visible' : 'hidden');
-        }
-        
-        // this function will get the row index for an element which is within the child state grid or for the row 
-        // element itself
-        function getTableRowDataIndex(_childOrRowElement)
-        {
-            let rowElement = _childOrRowElement.tagName instanceof HTMLTableRowElement ? _childOrRowElement : _childOrRowElement.closest('tr');
-            if(rowElement)
-                return rowElement.getAttribute('data-index');
-            return '';
-        }
-        
-        
-
-        // 
-    
+        }                
   ;
 
     </script>
@@ -415,15 +369,22 @@
 
         <div style="display: flex; height: 100%; flex-flow: column;">
             
+            <!-- 
+                this is the header line where the info and configuration save and load icons will be injected by the kernel 
+            -->
             <div class="row" style="flex: 0 1 auto; margin: 0px;">
                 <div class="col s12 m4 l2">
                     <img src="smartstate.png" class="logo">
                 </div>
             </div>
-
+            
             <div class="settings" style="flex: 1 1 auto; overflow: auto;">        
                 <div class="row" style="height: 100%; margin-bottom: 0px; display: flex;">
-                    <!-- <div class="col s8 m6 l3" style="height: 100%; border-right: 2px solid red; padding: 0px; padding-left: 20px;">-->
+
+                    <!-- 
+                         this is the left side of the settings page which will hold a list control that is scrollable and will 
+                         contain all the smartstates
+                    -->
                     <div class="left" style="height: 100%; border-right: 2px solid red; padding: 0px; padding-left: 20px; flex: 0  0 25em">
                         <div id="smartstatesListContainer" style="display: flex; height: 100%;">
                             <gui-simplelist id="smartstatelist" name="Smart States" style="width: 100%;">
@@ -436,6 +397,10 @@
                         </div>
                     </div>
 
+                    <!-- 
+                         this is the right side of the settings page which will hold the input elements for the list item and the
+                         child grid for the smartstate where we can define the states or selectors we want to use for calculation
+                    -->
                     <div class="right" style="flex: 1">
                             
                         <div class="row">
@@ -450,9 +415,6 @@
                                 <i class="material-icons" id="idRefresh">refresh</i>
                             </div>
                             <div class="input-field col s3 m2 l1">
-                                <!--
-                                <input id="calctype" type="number" min="1" max="65565" class="value" />
-                                --> 
                                 <select id="calctype" class="value">
                                 </select>
                                 <label class="translate" for="calctype">Typ:</label>
@@ -464,7 +426,6 @@
                         </div>
 
                         <div class="row">
-
                             <div class="col" id="childList">
                                 <a class="btn-floating waves-effect waves-light blue table-button-add"><i class="material-icons">add</i></a>
                                 <div class="table-values-div" id="childListTable">
@@ -481,16 +442,17 @@
                                     </table>
                                 </div>
                             </div>                                                
-
+                        </div>
 
                     </div>
                 </div>
+
             </div>
+       
+            <!-- this div is used for the state selection popup dialog -->
+            <div id="dialog-select-member" style="display:none"></div>
 
         </div>
-       
-        <div id="dialog-select-member" style="display:none"></div>
-
     </div>
 
 </body>
