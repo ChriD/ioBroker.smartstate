@@ -1,5 +1,4 @@
-//import {html, css, LitElement, live, map, repeat} from 'lit-all.min.js';
-import {LitElement, html, unsafeHTML, css, map} from 'https://cdn.jsdelivr.net/gh/lit/dist@2/all/lit-all.min.js';
+import {LitElement, html, unsafeHTML, css, map} from './lit-all.min.js'
 
 // TODO: key down & up
 

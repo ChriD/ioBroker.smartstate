@@ -5,10 +5,12 @@
     <!--
         TODO:            
             * make overflow of id hidden
-            * disable selector icon if not of type state
-            * do not allow '.' in smart state ids
-            * check for duplicate ids
+            * do not allow '.' in smart state ids            
             * validate fields (for name, id, type)
+            * visuals
+            * check state uses state
+            * code beautify
+            * functions
     -->
 
     <!-- Load ioBroker scripts and styles-->
@@ -30,56 +32,33 @@
     <script type="text/javascript" src="../../js/adapter-settings.js"></script>
 
 
-    <!-- Load our own files -->
+    
 
-    <script src="gui.lit.simpleList.js" type="module"></script>
+    <script src="libs/lit/gui.lit.simpleList.js" type="module"></script>
+    <script src="libs/awesome-notifications/modern.var.js" type="text/javascript"></script>
+    <script src="libs/common/common.js" type="text/javascript"></script>  
+    <script src="libs/common/stateSelectionDialogInit.js" type="text/javascript"></script>    
+    <script src="words.js" type="text/javascript"></script>
 
+    <link rel="stylesheet" type="text/css" href="libs/awesome-notifications/style.css" />
     <link rel="stylesheet" type="text/css" href="style.css" />
-    <script type="text/javascript" src="words.js"></script>
-    <script type="text/javascript" src="list.min.js"></script>
+        
 
     
     <script type="text/javascript">
 
-    var selectId;
-    function initSelectId (cb) {
-        if (selectId) return cb(selectId);
-        socket.emit('getObjects', function (err, res) {
-            if (!err && res) {
-                selectId = $('#dialog-select-member').selectId('init',  {
-                    noMultiselect: true,
-                    objects: res,
-                    imgPath:       '../../lib/css/fancytree/',
-                    filter:        {type: 'state'},
-                    name:          'vcard-select-state',
-                    texts: {
-                        select:          _('Select'),
-                        cancel:          _('Cancel'),
-                        all:             _('All'),
-                        id:              _('ID'),
-                        name:            _('Name'),
-                        role:            _('Role'),
-                        room:            _('Room'),
-                        value:           _('Value'),
-                        selectid:        _('Select ID'),
-                        from:            _('From'),
-                        lc:              _('Last changed'),
-                        ts:              _('Time stamp'),
-                        wait:            _('Processing...'),
-                        ack:             _('Acknowledged'),
-                        selectAll:       _('Select all'),
-                        unselectAll:     _('Deselect all'),
-                        invertSelection: _('Invert selection')
-                    },
-                    columns: ['image', 'name', 'role', 'room']
-                });
-                cb && cb(selectId);
-            }
-        });
-    }
+        // create the notification instance which will be usefull when talking to the user
+        // especially when there is an error in the configuration
+        const notifier = new AWN({icons: {enabled: false}});
 
-        
-        //let settings ={}
+        // if there is an error in the configuration (or an overall error) give some info to
+        // the user. If its a validation error the user will know what to do.
+        window.addEventListener( "error" , (_event) => {
+            notifier.alert(_event);
+        })
+
+        // SmartStates can be calculated using some calctypes, followind calctulation types
+        // are available and should cover many scenarios
         const STATECALCTYPE = {
             COUNT: 'count',
             SUM: 'sum',
@@ -90,18 +69,27 @@
             MAX: 'max',
             EQUALS: 'equals'
         };
-
-        let childSettings = {};
+        
+        // the 'onChangeCallback' is a reference to the '_onChange' var given in the 'load' function
+        // we do store it globally here because it's way easier to handle the activation of the 'Save'
+        // and 'Save and Close' buttons
         let onChangeCallback;
+
+        // this object is a helper object which will contain the child data configuration for a smartstate
+        // this has to be done because we only show child values of one selected smartstate and therfore
+        // we need some kind of cache
+        const childSettings = {};
+
 
         function load(_settings, _onChange)
         {
             if (!_settings) 
                 return;
-            
-            settings = _settings;
+                        
             onChangeCallback = _onChange;
 
+            // setup the selection box for the calculation type of the smartstate by using the constant
+            // variable defined at the beginning of the script
             const selectCalcTypeElement = document.getElementById('calctype');
             for (const [key, value] of Object.entries(STATECALCTYPE))                
             {
@@ -111,90 +99,90 @@
                 selectCalcTypeElement.add(option, null);
             }
             
-            this.loadSmartStatesList(settings.smartstate);
+            // we use a custom element (create with lit.dev) as a list which we will populate with the 
+            // configuration/settings data. The smartstate data is defined as object within the state
+            // for survey and better modularity
+            this.loadSmartStatesList(_settings.smartstate);
 
-            //
-            // when the name of the device was changed we will update the object id for that device
-            // given the id is empty.
-            let settingsNameElement = document.querySelector('#name');           
+            // register to the 'onblur' event of the smart state name input control to be able to 
+            // automatically init the id for the smartstate
+            const settingsNameElement = document.querySelector('#name');           
             settingsNameElement.onblur = (_event) => {
                 updateIdFromName(_event.target.value); 
             }
 
+            // register to the 'onclick' event of the refresh button located beside the id input element
+            // to be able to allow the user to refresh the id from the name by clicking on that icon
             let idRefreshElement = document.querySelector('#idRefresh');           
             idRefreshElement.onclick = (_event) => {
                 const smartstateListElement = document.querySelector('#smartstatelist'); 
-                updateIdFromName(smartstateListElement.getSelectedListItem().name, true);
+                updateIdFromName(smartstateListElement.getSelectedListItem().name, true);                
             }            
             
+            // be sure the save buttons are disabled after loading the configuration/settings
             _onChange(false);
         }
+       
+
+        function save(callback) 
+        {         
+            // 'getSettings' will throw an error if any validation fails and therfore the callback will not 
+            // be executed. It may be not the usual approach in javascript but i will go with that here
+            callback(this.getSettings());            
+        }  
 
 
+        // use this method to update the 'id' for the current selected smartstate from the given name
+        // the id will remove special chars and will transfer 'umlauts' to 'system readable' chars
         function updateIdFromName(_name, _force = false)
         {
             let settingsIdElement = document.querySelector('#id');
             if(!settingsIdElement.value || _force)
             {            
-                $(settingsIdElement).val(formatObjectId(_name));
+                $(settingsIdElement).val(formatObjectId(_name));                
                 if (M) M.updateTextFields();
+                onChangeCallback();
             }
-        }
-
+        }        
         
-        // this function will format a string (in this case the name of the device) to a valid object id which can be used 
-        // in the backend. The format will be done in the adapter backend because there we have 'FORBIDDEN_CHARS' available
-        function formatObjectId(_value)
-        {    
-            //FORBIDDEN_CHARS of iobroker: [^._\-/ :!#$%&()+=@^{}|~\p{Ll}\p{Lu}\p{Nd}]+
-            //const forbiddenChars = RegExp(/[^._\-/ :!#$%&()+=@^{}|~\p{Ll}\p{Lu}\p{Nd}]/);
-            let validObjectId = _value.replace(/ä/g, 'ae');
-            validObjectId = validObjectId.replace(/ö/g, 'oe');
-            validObjectId = validObjectId.replace(/ü/g, 'ue');
-            validObjectId = validObjectId.replace(/ß/g, 'ss');
-            validObjectId = validObjectId.replace(/Ä/g, 'Ae');
-            validObjectId = validObjectId.replace(/Ö/g, 'Oe;');
-            validObjectId = validObjectId.replace(/Ü/g, 'Ue;');
-            validObjectId = validObjectId.replace(/[^\w\s]/gi, '')
-            validObjectId = validObjectId.replace(/[\.\s\/]/g, '_');
-            
-            return validObjectId;  
-        }
 
+        // this method will populate the custom list element with the smart state items. it will also
+        // add some listeneser for selection changed, item deleted and item added,....
         function loadSmartStatesList(_smartStateList)
         {
             const smartstateListElement = document.querySelector('#smartstatelist');
             if(_smartStateList)
             {                                
                 for (const [key, smartstate] of Object.entries(_smartStateList))
-                {
-                    // TODO: build list for tables
-                    //childSettings[key] = [{ type: 'STATUS', statusid: 'test'}, { type: 'STATUS', statusid: 'test2'}];
-                    childSettings[key] = smartstate.childs;
+                {                    
+                    const objectKey = buildObjectIdFromSmartStateObject(smartstate);
+
+                    // build up a cache which will be used to show the child data for a given smartstate
+                    // object in a table. The table will change whenever another smartState was selected
+                    childSettings[objectKey] = smartstate.childs;
 
                     smartstateListElement.addItem({
                         name: smartstate.name,
                         id: smartstate.id,
                         calctype: smartstate.calctype,
                         path: smartstate.path
-                    })
-
-                    
+                    });                 
                 }                
             }
 
             smartstateListElement.addEventListener('selectionChanged', (_event)=> {
                 this.smartStateListSelectionChanged(_event.detail);
-            })
+            });
             
             smartstateListElement.addEventListener('itemDeleted', (_event)=> {
                 onChangeCallback();
-            })
+            });
 
             smartstateListElement.addEventListener('itemAdded', (_event)=> {
                 updateIdFromName(_event.detail.item.name);                
-            })
+            });
         }
+
 
 
         function getSettings()
@@ -211,19 +199,27 @@
 
             for(let idx=0; idx<smartstateListElement.listData.length; idx++)
             {
+                
+
                 // TODO: check for mandatory entries
-                let smartStateData = smartstateListElement.listData[idx];
-                settings.smartstate[smartStateData.id] = settings.smartstate[smartStateData.id] ? settings.smartstate[smartStateData.id] : {};
-                settings.smartstate[smartStateData.id].name = smartStateData.name;
-                settings.smartstate[smartStateData.id].id = smartStateData.id;
-                settings.smartstate[smartStateData.id].calctype = smartStateData.calctype;
-                settings.smartstate[smartStateData.id].path = smartStateData.path;
-                settings.smartstate[smartStateData.id].function = smartStateData.function;
-                settings.smartstate[smartStateData.id].objectId = (smartStateData.path ? smartStateData.path + '.' : '') + settings.smartstate[smartStateData.id].id;
+                const smartStateData = smartstateListElement.listData[idx];     
+                const smartStateObjectId = buildObjectIdFromSmartStateObject(smartStateData);
+
+                // if ID already exists we have to throw an error, id duplicates are not allowed
+                if(settings.smartstate[smartStateObjectId])                                                                            
+                    throw Error(`Duplicate ID's in configuration: ${smartStateObjectId}`);
+
+                settings.smartstate[smartStateObjectId] = settings.smartstate[smartStateData.id] ? settings.smartstate[smartStateData.id] : {};
+                settings.smartstate[smartStateObjectId].name = smartStateData.name;
+                settings.smartstate[smartStateObjectId].id = smartStateData.id;
+                settings.smartstate[smartStateObjectId].calctype = smartStateData.calctype;
+                settings.smartstate[smartStateObjectId].path = smartStateData.path;
+                settings.smartstate[smartStateObjectId].function = smartStateData.function;
+                settings.smartstate[smartStateObjectId].objectId = smartStateObjectId;
 
                 // get the child settings from the temporary childs settings object
-                //settings.smartstate[smartStateData.id].childs = Object.assign({}, childSettings[smartStateData.id]);
-                settings.smartstate[smartStateData.id].childs = JSON.parse(JSON.stringify(childSettings[smartStateData.id]));
+                // be sure to make a copy of the object (we use the easy way for that because we can be sure we only have valid json)
+                settings.smartstate[smartStateObjectId].childs = JSON.parse(JSON.stringify(childSettings[smartStateObjectId]));
             }  
 
             return settings;
@@ -254,7 +250,8 @@
                 object2GUI(listItem);
 
                 // TODO: clear list 
-                values2table('childList', childSettings[listItem.id], onChangeCallback, onDeviceTableReady);
+                const objectKey = buildObjectIdFromSmartStateObject(listItem);
+                values2table('childList', childSettings[objectKey], onChangeCallback, onDeviceTableReady);
             }
         }
         
@@ -266,16 +263,15 @@
                 const listItem = smartstateListElement.getListItem(_stateIdx);
                 GUI2Object(listItem);
 
-                childSettings[listItem.id] = table2values('childList');    
+                const objectKey = buildObjectIdFromSmartStateObject(listItem);
+                childSettings[objectKey] = table2values('childList');    
             }                
         }
 
-        /*
-        function values2GUISmartStateChild()
+        function buildObjectIdFromSmartStateObject(_object)
         {
-            
+            return  (_object.path ? _object.path + '.' : '') +_object.id;
         }
-        */
 
         function settingsChangedByUser()
         {            
@@ -343,26 +339,14 @@
             rowElements.forEach(rowElement => {
                 let rowIndex = getTableRowDataIndex(rowElement);
 
-                /*
+            
                 // attach onchange event to the device type so that we can update the channel controls
                 // in relation to the selection
-                let settingsStatusIdElement = rowElement.querySelector('select[data-name="statusid"]');
-                settingsStatusIdElement.onchange = (_event) => {                        
+                let settingsChildTypeElement = rowElement.querySelector('select[data-name="type"]');
+                settingsChildTypeElement.onchange = (_event) => {                        
                     let rowIndex = getTableRowDataIndex(_event.currentTarget);
-                    updateEditableChannels(rowIndex);
-                }
-                */
-
-                /*
-                // when the name of the device was changed we will update the object id for that device
-                // given the id is empty.
-                let settingsNameElement = rowElement.querySelector('input[data-name="name"]');
-                settingsNameElement.onblur = (_event) => {                        
-                    let rowIndex = getTableRowDataIndex(_event.target);
-                    updateObjectId(rowIndex, _event.target.value);
-                }
-                */
-                
+                    updateStateIdSelectorVisibility(rowIndex);
+                }            
 
                 // inject the 'select objectId' button for lookup on existing object id's
                 // TODO: make only visible for type status
@@ -384,10 +368,28 @@
                             });
                         });
                 }
+
+                updateStateIdSelectorVisibility(rowIndex);
             });                  
         }
+
+
+        // use this function to change the visual state of the state id selector within the state child table
+        // 'STATUS' types will have the icon and the ability to choose state ids, but 'SELECTOR' types won't have that!        
+        function updateStateIdSelectorVisibility(_rowIndex)
+        {
+            if(!_rowIndex)
+                return;
+                    
+            const deviceTableElement = document.querySelector('#childList');
+            const rowElement = deviceTableElement.querySelector('tr[data-index="' + _rowIndex + '"]');
+            const typeElement = rowElement.querySelector('select[data-name="type"]');            
+            const isVisible = typeElement.value == 'STATUS' ? true : false;
+            const lookupIcon = rowElement.querySelector('i[data-name="statusidLookup"');
+            lookupIcon.style.visibility = (isVisible ? 'visible' : 'hidden');
+        }
         
-        // this function will get the row index for an element which is within the device grid or for the row 
+        // this function will get the row index for an element which is within the child state grid or for the row 
         // element itself
         function getTableRowDataIndex(_childOrRowElement)
         {
@@ -397,9 +399,11 @@
             return '';
         }
         
-        function save(callback) {         
-            callback(this.getSettings());
-        }
+        
+
+        // 
+    
+  ;
 
     </script>
 
