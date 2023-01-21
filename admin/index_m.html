@@ -5,10 +5,8 @@
         TODO:        
             * logo
             * make overflow of id hidden
-            * do not allow '.' in smart state ids            
             * visuals
             * check if we can use a smartstate as state            
-            * TODOS
             * implement user functions
     -->
 
@@ -102,6 +100,13 @@
                 updateIdFromName(_event.target.value); 
             }
 
+            // register to the 'onblur' event of the smart state id input control to be able to 
+            // automatically update and validate the id
+            const settingsIdElement = document.querySelector('#id');           
+            settingsIdElement.onblur = (_event) => {
+                updateId(_event.target.value); 
+            }
+
             // register to the 'onclick' event of the refresh button located beside the id input element
             // to be able to allow the user to refresh the id from the name by clicking on that icon
             let idRefreshElement = document.querySelector('#idRefresh');           
@@ -141,7 +146,20 @@
                 if (M) M.updateTextFields();
                 onChangeCallback();
             }
-        }        
+        }   
+        
+        // this method will be called when the user manually enters the id, it will be formatted and special 
+        // chars wiull be removed. If thats the case the user will get a notification
+        function updateId(_id)
+        {
+            let settingsIdElement = document.querySelector('#id');
+            $(settingsIdElement).val(formatObjectId(_id));
+            if (M) M.updateTextFields();
+            onChangeCallback();
+
+            if($(settingsIdElement).val() != _id)
+                notifier.alert(`ID ${_id} was automatically formatted to a valid IoBroker ID: ${$(settingsIdElement).val()}`);
+        }
         
 
         // this method will populate the custom list element with the smart state items. it will also
@@ -210,7 +228,11 @@
                 if(!smartStateData.id)
                     throw Error(`ID is not allowed to be empty on state: ${smartStateData.name}`);
                 if(!smartStateData.calctype)
-                    throw Error(`Type is not allowed to be empty on state: ${smartStateData.id}`);                    
+                    throw Error(`Type is not allowed to be empty on state: ${smartStateData.id}`);   
+
+                // ID's with '.' are not allowed!
+                if(smartStateData.id.includes('.'))
+                    throw Error(`'.' is not allowed for id's: ${smartStateData.id}`); 
 
                 // if ID already exists we have to throw an error, id duplicates are not allowed
                 if(settings.smartstate[smartStateObjectId])                                                                            
