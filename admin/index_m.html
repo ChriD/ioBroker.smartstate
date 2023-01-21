@@ -3,15 +3,13 @@
 
     <!--
         TODO:        
-            * logo    
-            * init 'typ'
+            * logo
             * make overflow of id hidden
             * do not allow '.' in smart state ids            
             * visuals
             * check if we can use a smartstate as state            
-            * code beautify (sub files)
             * TODOS
-            * functions
+            * implement user functions
     -->
 
     <!-- Load ioBroker scripts and styles-->
@@ -166,8 +164,8 @@
                         id: smartstate.id,
                         calctype: smartstate.calctype,
                         path: smartstate.path
-                    });                 
-                }                
+                    });
+                }
             }
 
             smartstateListElement.addEventListener('selectionChanged', (_event)=> {
@@ -179,7 +177,11 @@
             });
 
             smartstateListElement.addEventListener('itemAdded', (_event)=> {
-                updateIdFromName(_event.detail.item.name);                
+                updateIdFromName(_event.detail.item.name);
+                // the calculation type has to be pre init to a standard value on new items
+                settingsIdElement = document.querySelector('#calctype');
+                if(_event.detail.userInteraction)
+                    $(settingsIdElement).val(STATECALCTYPE.OR).select();
             });
         }
 
@@ -243,6 +245,9 @@
             // after we have saved the data which was shown on the gui we can fill the GUI with the data
             // of the new selected item. This will update the child list too
             values2GUISmartState(_params.idx);
+
+            // make right side settings invisible if no selection was made, or visible if there is an selection
+            document.querySelector('#rightSettings').style.display = (_params.idx >= 0 ? 'block' : 'none');
         }
 
 
@@ -255,8 +260,7 @@
                 const smartstateListElement = document.querySelector('#smartstatelist');
                 const listItem = smartstateListElement.getListItem(_stateIdx);
                 object2GUI(listItem);
-
-                // TODO: clear list 
+                
                 const objectKey = buildObjectIdFromSmartStateObject(listItem);
                 values2table('childList', childSettings[objectKey], onChangeCallback, onDeviceTableReady);
             }
@@ -401,7 +405,7 @@
                          this is the right side of the settings page which will hold the input elements for the list item and the
                          child grid for the smartstate where we can define the states or selectors we want to use for calculation
                     -->
-                    <div class="right" style="flex: 1">
+                    <div class="right" style="flex: 1" id="rightSettings">
                             
                         <div class="row">
                             <h6 class="translate sub-title">Smartstate Einstellungen [XXXX]</h6>                                

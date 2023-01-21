@@ -1,3 +1,5 @@
+// this script/method is here to keep the main adapter index html a little bit cleaner
+// its used to initialize a selection window for a state lookup selection dialog
 
 var selectId;
 function initSelectId (cb) {
@@ -34,4 +36,4 @@ function initSelectId (cb) {
             cb && cb(selectId);
         }
     });
-  }
+}

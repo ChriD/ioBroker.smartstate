@@ -1,6 +1,6 @@
 import {LitElement, html, unsafeHTML, css, map} from './lit-all.min.js'
 
-// TODO: key down & up
+// TODO: implement key down & up
 
 class GuiSimpleList extends LitElement {
 
@@ -74,7 +74,7 @@ connectedCallback(_args)
     return html`
     <div style="display: flex; height: 100%; flex-flow: column;">
       <div style="style="flex: 0 1 auto; margin: 0px;">
-        <input id="fullname" type="text"><button @click=${() => this.addItem({ name: this._input.value}, true)}>Add</button>
+        <input id="fullname" type="text"><button @click=${() => this.addItem({ name: this._input.value}, true, true)}>Add</button>
         <h2>${this.name}</h2>
       </div>
       <div style="flex: 1 1 auto; overflow: auto;">        
@@ -114,16 +114,14 @@ connectedCallback(_args)
   }
 
 
-  listItemClicked(_event) {    
-    
-    // TODO ousource in method
-
+  listItemClicked(_event)
+  {  
     // if we hot on an element which should not trigger selection then skip
     if(_event.target.hasAttribute('itemselectdisabled'))
       return;    
-    
     this.selectListItemFromElement(_event.target);
   }
+
 
   selectListItem(_index, _previousIndex = this.currentSelectedIdx)
   {    
@@ -138,7 +136,7 @@ connectedCallback(_args)
 
     const element = this.shadowRoot.querySelector(`li[data-index="${_index}"]`)
     if(element)    
-      this.selectListItemFromElement(element);    
+      this.selectListItemFromElement(element, _previousIndex);    
   }
 
   getSelectedListItem()
@@ -160,7 +158,7 @@ connectedCallback(_args)
     });  
   }
 
-  selectListItemFromElement(_itemElement)
+  selectListItemFromElement(_itemElement,  _previousIndex = this.currentSelectedIdx)
   {
     this.unselectItems(); 
 
@@ -170,41 +168,44 @@ connectedCallback(_args)
       styleTarget = styleTarget.closest('li')
     styleTarget.classList.add('selected');
 
-    // TODO: event on selection changed    
+    // dispatch some event if the item has changed
     let dataIndex = styleTarget.getAttribute('data-index')
     if(this.currentSelectedIdx != dataIndex)
     {
-      this.previousSelectedIdx = this.currentSelectedIdx;
+      this.previousSelectedIdx = _previousIndex;/*this.currentSelectedIdx;*/
       this.currentSelectedIdx = dataIndex;
       this.dispatchEventSelectionChanged(this.currentSelectedIdx, this.listData[dataIndex]);
     }
   }
 
 
-  async addItem(_itemData, _select = false)
+  async addItem(_itemData, _select = false, _byUserInteraction = false)
   {
-    this.listData.push(_itemData)
-    // TODO: select new created state with id....
+    this.listData.push(_itemData)    
     this.requestUpdate();
     await this.updateComplete;
     this.selectListItem(this.listData.length - 1);     
-    this.dispatchEventItemAdded(this.listData.length - 1, _itemData);
+    this.dispatchEventItemAdded(this.listData.length - 1, _itemData, _byUserInteraction);
   }
 
   async deleteItem(_index) 
   {    
     const savedItemData = Object.assign({}, this.getListItem());
     this.listData = this.listData.filter((_, i) => i !== _index)
-    await this.updateComplete;  
+    await this.updateComplete;      
 
     // if we are deleteing the currently marked item, we have no actual selection anymore
     // and the previouse selection is not applicable too!
-    if(this.currentSelectedIdx == _index)         
-      this.selectListItem(-1, -1); 
+    if(this.currentSelectedIdx == _index)
+    {
+      this.selectListItem(-1, -1);
+    } 
     // if we delete an item which is before the selection, the selection will move down to
     // stay on the correct item
     else if(this.currentSelectedIdx > _index)
-      this.selectListItem(this.currentSelectedIdx - 1);
+    {
+      this.selectListItem(this.currentSelectedIdx - 1, this.currentSelectedIdx  - 1);
+    }
 
     // let the user know that an item was deleted
     this.dispatchEventItemDeleted(savedItemData);
@@ -222,9 +223,9 @@ connectedCallback(_args)
     this.dispatchEvent(event);
   } 
 
-  dispatchEventItemAdded(_idx, _itemData)
+  dispatchEventItemAdded(_idx, _itemData, _byUserInteraction = false)
   {
-    const event = new CustomEvent('itemAdded', {detail: { idx: _idx, item: _itemData }, bubbles: true, composed: true });
+    const event = new CustomEvent('itemAdded', {detail: { idx: _idx, item: _itemData, userInteraction: _byUserInteraction }, bubbles: true, composed: true });
     this.dispatchEvent(event);
   } 
 

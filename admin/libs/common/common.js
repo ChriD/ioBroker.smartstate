@@ -1,5 +1,4 @@
-
-// this function will format a string (in this case the name of the device) to a valid object id which can be used 
+// this function will format a string (in this case the name of the device) to a valid object id which can be used
 // in the backend. The format will be done in the adapter backend because there we have 'FORBIDDEN_CHARS' available
 function formatObjectId(_value)
 {
@@ -18,7 +17,7 @@ function formatObjectId(_value)
     return validObjectId;
 }
 
-// this function will get the row index for an element which is within the child state grid or for the row 
+// this function will get the row index for an element which is within the child state grid or for the row
 // element itself
 function getTableRowDataIndex(_childOrRowElement)
 {
@@ -29,11 +28,11 @@ function getTableRowDataIndex(_childOrRowElement)
 }
 
 
+// a little helper function to copy data from gui elements to an object
 function GUI2Object(_object)
 {
     $('.value').each(function () {
-        var $this = $(this);
-        
+        const $this = $(this);
         if ($this.attr('type') === 'checkbox') {
             _object[$this.attr('id')] = $this.prop('checked');
         } else if ($this.attr('type') === 'number') {
@@ -41,25 +40,25 @@ function GUI2Object(_object)
         } else {
             _object[$this.attr('id')] = $this.val();
         }
-    });            
+    });
 }
 
-
+// a little helper function to copy data object to gui elements
 function object2GUI(_object)
 {
     $('.value').each(function () {
-        var $key = $(this);
-        var id = $key.attr('id');
+        const $key = $(this);
+        const id = $key.attr('id');
 
         if($key.is('select'))
-        {                                 
-            $key.val(_object[id]).select();                  
+        {
+            $key.val(_object[id]).select();
         }
         else if ($key.attr('type') === 'checkbox') 
         {
             // do not call onChange direct, because onChange could expect some arguments
             $key.prop('checked', _object[id]);
-        }            
+        }
         else
         {
             // do not call onChange direct, because onChange could expect some arguments
