@@ -4,7 +4,6 @@
     <!--
         TODO:            
             * make overflow of id hidden
-            * visuals
             * check if we can use a smartstate as state            
             * implement user functions
     -->
@@ -56,6 +55,11 @@
             MIN: 'min',
             MAX: 'max',
             EQUALS: 'equals'
+        };
+
+        const STATECHILDTYPE = {
+            STATE: 'STATE',
+            PATTERN: 'PATTERN'
         };
         
         // the 'onChangeCallback' is a reference to the '_onChange' var given in the 'load' function
@@ -153,6 +157,7 @@
                 if (M) M.updateTextFields();
                 onChangeCallback();
             }
+            settingsChangedByUser();
         }   
         
         // this method will be called when the user manually enters the id, it will be formatted and special 
@@ -166,6 +171,8 @@
 
             if($(settingsIdElement).val() != _id)
                 notifier.alert(`ID ${_id} was automatically formatted to a valid IoBroker ID: ${$(settingsIdElement).val()}`);
+
+            settingsChangedByUser();
         }
         
 
@@ -355,7 +362,7 @@
 
                 // inject the 'select objectId' button for lookup on existing object id's. This icon
                 // will behave as a button and will allow the user to open a state selection dialog                
-                const columnElement = rowElement.querySelector('input[data-name="statusid"]').parentElement;                                
+                const columnElement = rowElement.querySelector('input[data-name="idOrPattern"]').parentElement;                                
                 let iElement = document.createElement("i");
                 iElement.classList.add('material-icons');
                 iElement.setAttribute("data-name", "statusidLookup");
@@ -366,9 +373,9 @@
                     // handle it's return value if beeing closed with 'OK'.
                     let rowIndex = getTableRowDataIndex(_event.target);
                     initSelectId(function (sid) {
-                        sid.selectId('show', $('#childListTable .values-input[data-name="statusid"][data-index="' + rowIndex + '"]').val(), function (newId) {
+                        sid.selectId('show', $('#childListTable .values-input[data-name="idOrPattern"][data-index="' + rowIndex + '"]').val(), function (newId) {
                             if (newId) {
-                                $('#childListTable .values-input[data-name="statusid"][data-index="' + rowIndex + '"]').val(newId).trigger('change');
+                                $('#childListTable .values-input[data-name="idOrPattern"][data-index="' + rowIndex + '"]').val(newId).trigger('change');
                             }
                         });
                     });
@@ -391,7 +398,7 @@
             const deviceTableElement = document.querySelector('#childList');
             const rowElement = deviceTableElement.querySelector('tr[data-index="' + _rowIndex + '"]');
             const typeElement = rowElement.querySelector('select[data-name="type"]');            
-            const isVisible = typeElement.value == 'STATUS' ? true : false;
+            const isVisible = typeElement.value == STATECHILDTYPE.STATE ? true : false;
             const lookupIcon = rowElement.querySelector('i[data-name="statusidLookup"');
             lookupIcon.style.visibility = (isVisible ? 'visible' : 'hidden');
         }                
@@ -409,7 +416,7 @@
             
             <!-- 
                 this is the header line where the info and configuration save and load icons will be injected by the kernel 
-            -->
+            -->    
             <!--
             <div class="row" style="flex: 0 1 auto; margin: 0px;">
                 <div class="col s12 m4 l2">
@@ -417,7 +424,28 @@
                 </div>
             </div>
             -->
+               
+            <!--
+                The help button and save/load adapter 
+                Normally this is beeing implemented and injected by the kernel (see above)
+            --> 
+            <div>
+                <div class="help-link" style="padding-right: 15px;">   
+                    <a class="btn-floating btn-small waves-effect waves-light" href="https://github.com/ChriD/iobroker.smartstate/blob/master/README.md" target="_blank" rel="noreferrer">       
+                        <i class="material-icons">live_help</i>
+                    </a>   
+                    <a class="btn-floating btn-small waves-effect waves-light adapter-config-load" title="Load configuration from file">     
+                        <i class="material-icons">file_upload</i>   
+                    </a>   
+                    <a class="btn-floating btn-small waves-effect waves-light adapter-config-save" title="Save configuration to file">       
+                        <i class="material-icons">file_download</i>   
+                    </a>
+                </div>
+            </div>                        
             
+            <!--
+                Main settings container
+            -->
             <div class="settings" style="flex: 1 1 auto; overflow: auto;">        
                 <div class="row" style="height: 100%; margin-bottom: 0px; display: flex;">
 
@@ -426,10 +454,12 @@
                          contain all the smartstates
                     -->
                     <div class="area left">
-                        <a class="btn-floating waves-effect waves-light blue table-button-add" id="addListItem"><i class="material-icons">add</i></a>
-                        <div id="smartstatesListContainer" style="display: flex; height: 100%;">
+                        <div>
+                            <a class="btn-floating waves-effect waves-light blue table-button-add" id="addListItem"><i class="material-icons">add</i></a>
+                        </div>
+                        <div id="smartstatesListContainer" style="display: flex; flex: 1; overflow-x: auto;">                            
                             <gui-simplelist id="smartstatelist" name="Smart States" style="width: 100%;">
-                                <div>
+                                <div style="padding-left: 10px;">
                                     <div style="min-height: 1em; font-weight: bold; margin-bottom: 7px;">${item.name}</div>
                                     <div style="min-height: 1em; font-size: 0.75em; margin-bottom: 7px;">${item.path ? html`${item.path}.`: ''}${item.id}</div>
                                     <div style="min-height: 1em; font-size: 0.75em;">${item.calctype}</div>
@@ -482,8 +512,8 @@
                                         <thead>
                                             <tr>
                                                 <th data-name="_index" style="width: 40px" class="translate"></th>                                
-                                                <th data-name="type"  style="min-width: 100px" data-type="select" data-options="STATUS;SELECTOR" class="translate type">Type</th>                                    
-                                                <th data-name="statusid" class="translate" style="min-width: 320px">Status/Selector</th>                                                                                
+                                                <th data-name="type"  style="min-width: 100px" data-type="select" data-options="STATE;PATTERN" class="translate type">Type</th>                                    
+                                                <th data-name="idOrPattern" class="translate" style="min-width: 320px">Id/Pattern</th>                                                                                
                                                 <!--<th data-name="function" data-type="string" class="translate channel">Function</th>-->
                                                 <th data-buttons="delete up down" style="width: 120px"></th>
                                             </tr>

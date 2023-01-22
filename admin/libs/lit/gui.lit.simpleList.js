@@ -5,9 +5,12 @@ import {LitElement, html, unsafeHTML, css, map} from './lit-all.min.js'
 class GuiSimpleList extends LitElement {
 
   static styles = css`
+
       :host {
+        --horizontalSpacerColor: rgb(230,230,230);
+        --selectionColor: #4dabf5;
         display: block;
-        max-width: 800px;   
+        max-width: 800px;
       }
       
       ul {
@@ -17,13 +20,12 @@ class GuiSimpleList extends LitElement {
         height: 100%;
       }
 
-      ul li {    
-                  
+      ul li {
       }     
       
       ul li .container {
         display: flex; 
-        align-items: center;  
+        align-items: center;
         width: 100%;
         padding-bottom: 10px;
         padding-top: 10px; 
@@ -44,12 +46,14 @@ class GuiSimpleList extends LitElement {
       }
 
       ul li.selected{
-        background-color: red;        
+        background-color: var(--selectionColor);    
       }
 
+      /* like textcolor but rgba !!! */
       ul li .horizontalSpacer {
         min-height: 1px;
-        background-image: linear-gradient(rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09));
+        /*background-image: linear-gradient(rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09));*/
+        background-color: var(--horizontalSpacerColor);
       }
 
       .delete {
@@ -63,7 +67,9 @@ class GuiSimpleList extends LitElement {
     name: {type: String, reflect: true }    
   }
 
-  constructor() {
+
+  constructor()
+  {
     super();
     this.listData = []
     this.itemTemplate;
@@ -71,16 +77,32 @@ class GuiSimpleList extends LitElement {
     this.previousSelectedIdx = -1;
   }
 
-connectedCallback(_args)
-{
-    // obviously, you could also use 'setImmediate()', if available in your browser(!)
-    setTimeout(() => {
-      this.itemTemplate = this.innerHTML;
-    }, 0);
-    super.connectedCallback(_args);
-}
+  connectedCallback(_args)
+  {
+      // obviously, you could also use 'setImmediate()', if available in your browser(!)
+      setTimeout(() => {
+        this.itemTemplate = this.innerHTML;
+      }, 0);
+      super.connectedCallback(_args);
+  }
 
-  render() {
+
+  caclulateCSSVariables()
+  {
+    // we try to auto match to the current style, so we use the text color for the given
+    // element und do some rgba stuff to make the horizontal spliiting line color   
+    let color = window.getComputedStyle(this).getPropertyValue('color');
+    color = color.replace(/rgb/i, "rgba");
+    color = color.replace(/\)/i,', 0.15)');
+    this.style.setProperty('--horizontalSpacerColor', color);
+  }
+
+
+  render()
+  {
+    // try matching styles 
+    this.caclulateCSSVariables();
+
     return html`    
     <div style="display: flex; height: 100%; flex-flow: column;">
       <!--

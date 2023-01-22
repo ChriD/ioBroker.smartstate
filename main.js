@@ -14,7 +14,10 @@ const STATECALCTYPE = {
     EQUALS: 'equals'
 };
 
-
+const STATECHILDTYPE = {
+    STATE: 'STATE',
+    PATTERN: 'PATTERN'
+};
 
 class Smartstate extends utils.Adapter {
 
@@ -34,6 +37,7 @@ class Smartstate extends utils.Adapter {
         this.on('stateChange', this.onStateChange.bind(this));
         this.on('unload', this.onUnload.bind(this));
     }
+
 
     /**
      * Is called when databases are connected and adapter received configuration.
@@ -60,7 +64,7 @@ class Smartstate extends utils.Adapter {
             for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
             {
                 const childObject = smartstate.childs[childIdx];
-                this.addSubscriptionToForeignState(key, childObject.statusid);
+                this.addSubscriptionToForeignState(key, childObject.idOrPattern, childObject.type);
             }
 
             // create (re)calculate the given smartstate value and set it
@@ -71,8 +75,7 @@ class Smartstate extends utils.Adapter {
             smartStatesCreatedOrUpdated.push(this.namespace + '.' + (smartstate.path ? smartstate.path + '.' : '.') + key);
         }
 
-        // TODO: remove smart states which are not mentioned in the configuration
-
+        // remove smart states which are not mentioned in the configuration
         const states = await this.getStatesOfAsync();
         this.log.warn(JSON.stringify(smartStatesCreatedOrUpdated));
         for (const state of states)
@@ -89,22 +92,39 @@ class Smartstate extends utils.Adapter {
         this.calculateStatesInStack();
     }
 
-    addSubscriptionToForeignState(_smartstateId, _selectorOrId)
+
+    addSubscriptionToForeignState(_smartstateId, _patternOrId, _type)
     {
-        this.subscribeForeignStates(_selectorOrId);
+        this.subscribeForeignStates(_patternOrId);
 
         // create a lookup table/object for fast lookup of smartstates for a given subscription change
-        if(!this.subscriptionSmartstateLink[_selectorOrId])
+        if(!this.subscriptionSmartstateLink[_patternOrId])
         {
-            this.subscriptionSmartstateLink[_selectorOrId] = {};
-            this.subscriptionSmartstateLink[_selectorOrId].links = new Array();
+            this.subscriptionSmartstateLink[_patternOrId] = {};
+            this.subscriptionSmartstateLink[_patternOrId].links = new Array();
         }
         // TODO: get all state id's which are within the selector if the smartstate child is of type 'selector'
         // otherwise we do have an state key which we csan insert directly
-        this.subscriptionSmartstateLink[_selectorOrId].links.push(_smartstateId);
+        if(_type == STATECHILDTYPE.STATE)
+        {
+            this.subscriptionSmartstateLink[_patternOrId].links.push(_smartstateId);
+        }
+        else
+        {
+            // TODO: @@@
+            const states = await this.getStatesAsync(_patternOrId);
+            if(states)
+            {
+                for(let idx=0; idx<states.length; idx++)
+                {
+                    this.log.error(JSON.stringify(states[idx]));
+                }
+            }            
+        }
 
-        this.log.info(`Added subscription to ${_selectorOrId}`);
+        this.log.info(`Added subscription to ${_patternOrId}`);
     }
+
 
     /**
      * Is called when adapter shuts down - callback has to be called under any circumstances!
@@ -118,6 +138,7 @@ class Smartstate extends utils.Adapter {
             callback();
         }
     }
+
 
     /**
      * Is called if a subscribed state changes
@@ -242,9 +263,9 @@ class Smartstate extends utils.Adapter {
             for(let childIdx=0; childIdx<smartState.childs.length; childIdx++)
             {
                 const childObject = smartState.childs[childIdx];
-                const state = await this.getForeignStateAsync(childObject.statusid);
+                const state = await this.getForeignStateAsync(childObject.idOrPattern);
 
-                this.log.debug(`Calculation-Child: ${childObject.statusid}: ${state.val}`);
+                this.log.debug(`Calculation-Child: ${childObject.idOrPattern}: ${state.val}`);
 
                 let value;
                 if(childObject.function)
