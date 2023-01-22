@@ -207,6 +207,7 @@ class Smartstate extends utils.Adapter {
 
     async createOrUpdateState(_id, _name, _stateType, _stateRole, _stateValue)
     {
+        this.log.debug(`Create state: id=${_id}, name=${_name}, type=${_stateType}, role=${_stateRole}, value=${_stateValue}`);
         const commonObject = {
             type: _stateType,
             role: _stateRole ? _stateRole : 'state',
