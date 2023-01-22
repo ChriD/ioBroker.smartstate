@@ -425,7 +425,7 @@
                          this is the left side of the settings page which will hold a list control that is scrollable and will 
                          contain all the smartstates
                     -->
-                    <div class="left">
+                    <div class="area left">
                         <a class="btn-floating waves-effect waves-light blue table-button-add" id="addListItem"><i class="material-icons">add</i></a>
                         <div id="smartstatesListContainer" style="display: flex; height: 100%;">
                             <gui-simplelist id="smartstatelist" name="Smart States" style="width: 100%;">
@@ -438,15 +438,17 @@
                         </div>
                     </div>
 
-
-                    <div class="spacer">                        
+                    <!-- 
+                        A vertical spacer for a little better user experience
+                    -->
+                    <div class="area spacer">                        
                     </div>
 
                     <!-- 
                          this is the right side of the settings page which will hold the input elements for the list item and the
                          child grid for the smartstate where we can define the states or selectors we want to use for calculation
                     -->
-                    <div class="right" id="rightSettings">
+                    <div class="area right" id="rightSettings">
                     
                         <div class="row" style="min-height: 25px;">
                         </div>
