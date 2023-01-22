@@ -77,7 +77,7 @@ class Smartstate extends utils.Adapter {
 
         // remove smart states which are not mentioned in the configuration
         const states = await this.getStatesOfAsync();
-        this.log.warn(JSON.stringify(smartStatesCreatedOrUpdated));
+        this.log.debug(`Created smart states: ${JSON.stringify(smartStatesCreatedOrUpdated)}`);
         for (const state of states)
         {
             // check if the state is defined in the configuration. The smartstate id has to be unique within the
