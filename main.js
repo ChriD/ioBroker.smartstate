@@ -112,7 +112,7 @@ class Smartstate extends utils.Adapter {
         else
         {
             // TODO: @@@
-            const states = await this.getStatesAsync(_patternOrId);
+            const states = this.getStates(_patternOrId);
             if(states)
             {
                 for(let idx=0; idx<states.length; idx++)
