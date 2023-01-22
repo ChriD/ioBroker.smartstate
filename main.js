@@ -51,7 +51,7 @@ class Smartstate extends utils.Adapter {
         for (const [key, smartstate] of Object.entries(this.config.smartstate))
         {
             // add state if not there
-            this.log.info(`Create state ${key}: ${JSON.stringify(smartstate)}`);
+            this.log.debug(`Create state ${key}: ${JSON.stringify(smartstate)}`);
 
             // build the tree for the state if necessary
             if(smartstate.path){
@@ -119,10 +119,10 @@ class Smartstate extends utils.Adapter {
                 {
                     this.log.error(JSON.stringify(states[idx]));
                 }
-            }            
+            }
         }
 
-        this.log.info(`Added subscription to ${_patternOrId}`);
+        this.log.debug(`Added subscription to ${_patternOrId}`);
     }
 
 

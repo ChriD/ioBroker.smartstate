@@ -268,6 +268,14 @@
                 // get the child settings from the temporary childs settings object
                 // be sure to make a copy of the object (we use the easy way for that because we can be sure we only have valid json)
                 settings.smartstate[smartStateObjectId].childs = JSON.parse(JSON.stringify(childSettings[smartStateObjectId]));
+
+                // the patternOrId has to be set
+                for(let childIdx=1; childIdx<settings.smartstate[smartStateObjectId].childs.length; childIdx++)
+                {
+                    const childObject = settings.smartstate[smartStateObjectId].childs[childIdx];
+                    if(!childObject.idOrPattern)
+                        throw Error(`Empty id or pattern is not allowed for id: ${smartStateData.id}`);
+                }
             }  
 
             return settings;
