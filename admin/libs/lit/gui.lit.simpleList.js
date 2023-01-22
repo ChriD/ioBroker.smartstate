@@ -16,13 +16,18 @@ class GuiSimpleList extends LitElement {
         padding: 0;
         height: 100%;
       }
-      ul li {
-        display: flex;
-        align-items: center;        
+
+      ul li {    
+                  
+      }     
+      
+      ul li .container {
+        display: flex; 
+        align-items: center;  
+        width: 100%;
         padding-bottom: 10px;
-        padding-top: 10px;        
-        border-bottom:1px solid red;
-      }            
+        padding-top: 10px; 
+      }
 
       ul li .left {
         flex: 1;
@@ -40,6 +45,11 @@ class GuiSimpleList extends LitElement {
 
       ul li.selected{
         background-color: red;        
+      }
+
+      ul li .horizontalSpacer {
+        min-height: 1px;
+        background-image: linear-gradient(rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09));
       }
 
       .delete {
@@ -71,22 +81,27 @@ connectedCallback(_args)
 }
 
   render() {
-    return html`
+    return html`    
     <div style="display: flex; height: 100%; flex-flow: column;">
+      <!--
       <div style="style="flex: 0 1 auto; margin: 0px;">
         <input id="fullname" type="text"><button @click=${() => this.addItem({ name: this._input.value}, true, true)}>Add</button>
         <h2>${this.name}</h2>
       </div>
+      -->
       <div style="flex: 1 1 auto; overflow: auto;">        
         <ul id="list">
           ${map(this.listData, (listItem, index) => html`
             <li @click="${this.listItemClicked}" data-index="${index}">
-              <div class="left">
-                ${this.caclulateTemplate(listItem, this.itemTemplate)}
+              <div class="container">
+                <div class="left">
+                  ${this.caclulateTemplate(listItem, this.itemTemplate)}
+                </div>
+                <div class="right" itemselectdisabled='true'>
+                  <button @click=${() => this.deleteItem(index)} itemselectdisabled='true'>x</button>
+                </div>
               </div>
-              <div class="right" itemselectdisabled='true'>
-                <button @click=${() => this.deleteItem(index)} itemselectdisabled='true'>x</button>
-              </div>              
+              <div class="horizontalSpacer"></div>            
             </li>
           `)}
         </ul>
