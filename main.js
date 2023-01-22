@@ -152,7 +152,7 @@ class Smartstate extends utils.Adapter {
         {
             if (state /*&& state.ack === true*/)
             {
-                this.log.warn(`State ${id} changed to ${state.val}  ACK=${state.ack}`);
+                //this.log.warn(`State ${id} changed to ${state.val}  ACK=${state.ack}`);
 
                 // (re)calculate all the given smartstate values which are linked to this state
                 if(this.subscriptionSmartstateLink[id] && this.subscriptionSmartstateLink[id].links)
