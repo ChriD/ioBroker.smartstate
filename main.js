@@ -72,7 +72,7 @@ class Smartstate extends utils.Adapter {
             await this.recalculateSmartState(key);
 
             // store full object/stateIds for the created states for cleanup process
-            smartStatesCreatedOrUpdated.push(this.namespace + '.' + (smartstate.path ? smartstate.path + '.' : '.') + smartstate.id);
+            smartStatesCreatedOrUpdated.push(this.namespace + '.' + (smartstate.path ? smartstate.path + '.' : '') + smartstate.id);
         }
 
         // remove smart states which are not mentioned in the configuration
