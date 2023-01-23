@@ -19,21 +19,31 @@ The handling is very easy. Add a new smart state, define it's name and type and 
 
 ## Getting started
 
-* Set the artnet settings in the adapter to connect to a ARTNET node device
-    * Smartstate settings
-        | Field | Description |
-        |-------------|-------------|
-        | `Name` | The name of the smartstate |
-        | `Id` | The id of the smartstate |
-        | `Type` | Calculation type which defines how the smartstate uses the child to calculate its value |
-        | `Calc only for ACK values` | If checked, only state values which are acknowledged will trigger a recalulation |
-    * Child Settings
-        | Field | Description |
-        |-------------|-------------|
-        | `Type` | the `state` type will allow a selection of one state<br>, the `pattern` type will allow a state selection pattern |
-        | `Id/Pattern` | the state id or the pattern |        
+Add a new smartstate by using the left `+` icon on the top left of the settings page.<br>
+Then you can add following parameters.
 
-## Example        
+* Smartstate settings
+    | Field | Description |
+    |-------------|-------------|
+    | `Name` | The name of the smartstate |
+    | `Id` | The id of the smartstate |
+    | `Type` | Calculation type which defines how the smartstate uses the child to calculate its value |
+    | `Calc only for ACK values` | If checked, only state values which are acknowledged will trigger a recalulation |
+* Child Settings
+    | Field | Description |
+    |-------------|-------------|
+    | `Type` | the `state` type will allow a selection of one state<br>, the `pattern` type will allow a state selection pattern |
+    | `Id/Pattern` | the state id or the pattern |        
+
+## Important  
+
+* A smartstate can use another smartstate as child state, but please be sure you do not create a recursion (`State A` has `State B` as child and `State B` has `State A` as child).
+Those recursions are not caught by the validation and will lead to endless loops and therfore will break the adapter or even the whole system 
+* Using the state selector dialog in the child table may take a while when first opening. I am open for contributions to open a better, newer dialog
+
+## Example  
+
+Here is an example of a state which counts the light's which are on within a room (in this case kitchen) and another one which indicates if a light in the kitchen is on.
 
 ## Changelog
 <!--
