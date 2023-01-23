@@ -159,7 +159,7 @@ class Smartstate extends utils.Adapter {
                 {
                     for (let linkIdx=0; linkIdx<this.subscriptionSmartstateLink[id].links.length; linkIdx++)
                     {
-                        const smartState = this.config.smartstate[id];
+                        const smartState = this.config.smartstate[this.subscriptionSmartstateLink[id].links[linkIdx]];
                         if(!smartState.calcOnlyForACK || state.ack == true)
                         {
                             // only add the ids for calculation into a stack buffer, this stack buffer will
