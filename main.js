@@ -159,6 +159,7 @@ class Smartstate extends utils.Adapter {
                 {
                     for (let linkIdx=0; linkIdx<this.subscriptionSmartstateLink[id].links.length; linkIdx++)
                     {
+                        // we have to check if we have to check the ACK of the state change value
                         const smartState = this.config.smartstate[this.subscriptionSmartstateLink[id].links[linkIdx]];
                         if(!smartState.calcOnlyForACK || state.ack == true)
                         {

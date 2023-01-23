@@ -12,7 +12,28 @@
 
 ## smartstate adapter for ioBroker
 
-TODO: @@@
+With this adapter you can create states which are cummulations of other states<br>
+A good example is, if you want to create a state which count lights which are on (see examples)<br>
+The handling is very easy. Add a new smart state, define it's name and type and add child states which will be used to calculate the states value by the given type (operator)
+
+
+## Getting started
+
+* Set the artnet settings in the adapter to connect to a ARTNET node device
+    * Smartstate settings
+        | Field | Description |
+        |-------------|-------------|
+        | `Name` | The name of the smartstate |
+        | `Id` | The id of the smartstate |
+        | `Type` | Calculation type which defines how the smartstate uses the child to calculate its value |
+        | `Calc only for ACK values` | If checked, only state values which are acknowledged will trigger a recalulation |
+    * Child Settings
+        | Field | Description |
+        |-------------|-------------|
+        | `Type` | the `state` type will allow a selection of one state<br>, the `pattern` type will allow a state selection pattern |
+        | `Id/Pattern` | the state id or the pattern |        
+
+## Example        
 
 ## Changelog
 <!--
