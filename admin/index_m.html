@@ -2,8 +2,7 @@
 <head>
 
     <!--
-        TODO:                        
-            * when changeing id or path, check if exists
+        TODO:                                    
             * check if we can use a smartstate as state            
             * mention in docs that selection window open may take a while
             * state ACK ?!
@@ -45,7 +44,7 @@
         // the user. If its a validation error the user will know what to do.
         window.addEventListener( "error" , (_event) => {
             notifier.alert(_event);
-        })
+        })        
 
         // SmartStates can be calculated using some calctypes, followind calctulation types
         // are available and should cover many scenarios
@@ -81,7 +80,7 @@
             if (!_settings) 
                 return;
                         
-            onChangeCallback = _onChange;
+            onChangeCallback = _onChange;            
 
             // setup the selection box for the calculation type of the smartstate by using the constant
             // variable defined at the beginning of the script
@@ -134,7 +133,13 @@
             $('#name').on('change', () => { onChangeCallback(); settingsChangedByUser() });
             $('#id').on('change', () => { onChangeCallback(); settingsChangedByUser() })
             $('#path').on('change', () => { onChangeCallback(); settingsChangedByUser() })
-            $('#calctype').on('change', () => { onChangeCallback(); settingsChangedByUser() })                      
+            $('#calctype').on('change', () => { onChangeCallback(); settingsChangedByUser() })    
+            
+            // we attach a 'leavingItem' callback to add some item validation
+            const smartstateListElement = document.querySelector('#smartstatelist');
+            smartstateListElement.leavingItemCallback = (_itemData) => {
+                return validateItemData(_itemData);
+            }
                        
             // be sure the save buttons are disabled after loading the configuration/settings
             _onChange(false);
@@ -173,11 +178,10 @@
             onChangeCallback();
 
             if($(settingsIdElement).val() != _id)
-                notifier.alert(`ID ${_id} was automatically formatted to a valid IoBroker ID: ${$(settingsIdElement).val()}`);
+                notifier.warning(`ID ${_id} was automatically formatted to a valid IoBroker ID: ${$(settingsIdElement).val()}`);
 
             settingsChangedByUser();
-        }
-        
+        }        
 
         // this method will populate the custom list element with the smart state items. it will also
         // add some listeneser for selection changed, item deleted and item added,....
@@ -225,6 +229,56 @@
             });
         }
 
+        // this function may be called in the scope of this document of in the 'scope' of the list
+        // because this method is attached to a callback function when chageing the selection of the list
+        // this method will return 'true' or 'false' and if the result is false, the list will not change 
+        // it's selection nor is saving of the configuration is allowed!
+        function validateItemData(_itemData)
+        {
+            try
+            {
+                // check for some mandatory entries like id, name and type
+                if(!_itemData.name)
+                    throw Error(`Name is not allowed to be empty on state: ${_itemData.id}`);
+                if(!_itemData.id)
+                    throw Error(`ID is not allowed to be empty on state: ${_itemData.name}`);
+                if(!_itemData.calctype)
+                    throw Error(`Type is not allowed to be empty on state: ${_itemData.id}`);   
+
+                // ID's with '.' are not allowed!
+                if(_itemData.id.includes('.'))
+                    throw Error(`'.' is not allowed for id's: ${_itemData.id}`);
+
+                // check if there are duplicate id's. If that's the case the validation of the item has to fail
+                // Fell free to change this to better and nice code.
+                const objectKeyItemData = buildObjectIdFromSmartStateObject(_itemData);                 
+                const smartstateListElement = document.querySelector('#smartstatelist');                
+                {           
+                    let counter = 0;
+                    for (const [key, smartstate] of Object.entries(smartstateListElement.listData))
+                    {                    
+                        const objectKey = buildObjectIdFromSmartStateObject(smartstate);  
+                        if(objectKeyItemData == objectKey)
+                        {                
+                            counter++;
+                            if(counter > 1)
+                            throw Error(`Duplicate id: ${objectKey}`);                            
+                        }
+                   
+                    }
+                }
+
+            }
+            catch(_error)
+            {
+                // the 'try catch' in here is neccessary because of the different 'scopes' because the 'windows.addEventListener'
+                // wont catch throws if the scope was within the ccustom list element!
+                notifier.alert(_error);
+                return false;
+            }
+            return true;
+        }
+
 
         // this method will build a saveable configuration/settings object from the data given in the gui
         // (list, input values, tables, ...) and from the data caches
@@ -244,21 +298,14 @@
                 const smartStateData = smartstateListElement.listData[idx];     
                 const smartStateObjectId = buildObjectIdFromSmartStateObject(smartStateData);
 
-                // check for some mandatory entries like id, name and type
-                if(!smartStateData.name)
-                    throw Error(`Name is not allowed to be empty on state: ${smartStateData.id}`);
-                if(!smartStateData.id)
-                    throw Error(`ID is not allowed to be empty on state: ${smartStateData.name}`);
-                if(!smartStateData.calctype)
-                    throw Error(`Type is not allowed to be empty on state: ${smartStateData.id}`);   
-
-                // ID's with '.' are not allowed!
-                if(smartStateData.id.includes('.'))
-                    throw Error(`'.' is not allowed for id's: ${smartStateData.id}`); 
-
+                // we can use the same validation method we doi on the 'itemLeaving' callback
+                if(!validateItemData(smartStateData))
+                    throw Error(`Validation failed!`)
+                
+                // no need to check it here again, already done in validateItemData
                 // if ID already exists we have to throw an error, id duplicates are not allowed
-                if(settings.smartstate[smartStateObjectId])                                                                            
-                    throw Error(`Duplicate ID's in configuration: ${smartStateObjectId}`);
+                //if(settings.smartstate[smartStateObjectId])                                                                            
+                //    throw Error(`Duplicate ID's in configuration: ${smartStateObjectId}`);
 
                 settings.smartstate[smartStateObjectId] = settings.smartstate[smartStateData.id] ? settings.smartstate[smartStateData.id] : {};
                 settings.smartstate[smartStateObjectId].name = smartStateData.name;

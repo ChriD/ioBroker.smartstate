@@ -75,6 +75,7 @@ class GuiSimpleList extends LitElement {
     this.itemTemplate;
     this.currentSelectedIdx = -1;
     this.previousSelectedIdx = -1;
+    this.leavingItemCallback = null;
   }
 
   connectedCallback(_args)
@@ -86,7 +87,6 @@ class GuiSimpleList extends LitElement {
       super.connectedCallback(_args);
   }
 
-
   caclulateCSSVariables()
   {
     // we try to auto match to the current style, so we use the text color for the given
@@ -96,7 +96,6 @@ class GuiSimpleList extends LitElement {
     color = color.replace(/\)/i,', 0.15)');
     this.style.setProperty('--horizontalSpacerColor', color);
   }
-
 
   render()
   {
@@ -132,7 +131,6 @@ class GuiSimpleList extends LitElement {
     `
   }
 
-
   caclulateTemplate(item, itemTemplate)
   {
       let value;
@@ -150,15 +148,15 @@ class GuiSimpleList extends LitElement {
       return value;
   }
 
-
   listItemClicked(_event)
   {  
     // if we hot on an element which should not trigger selection then skip
     if(_event.target.hasAttribute('itemselectdisabled'))
       return;    
-    this.selectListItemFromElement(_event.target);
-  }
 
+    if(this.leavingitem(this.currentSelectedIdx))
+      this.selectListItemFromElement(_event.target);
+  }
 
   selectListItem(_index, _previousIndex = this.currentSelectedIdx)
   {    
@@ -215,9 +213,11 @@ class GuiSimpleList extends LitElement {
     }
   }
 
-
   async addItem(_itemData, _select = false, _byUserInteraction = false)
   {
+    if(!this.leavingitem(this.currentSelectedIdx))
+      return;
+
     this.listData.push(_itemData)    
     this.requestUpdate();
     await this.updateComplete;
@@ -246,6 +246,17 @@ class GuiSimpleList extends LitElement {
 
     // let the user know that an item was deleted
     this.dispatchEventItemDeleted(savedItemData);
+  }
+
+  leavingitem(_idx)
+  {
+    if(_idx<0)
+      return true;
+
+    if(this.leavingItemCallback)
+      return this.leavingItemCallback(this.getSelectedListItem());
+    
+    return true;
   }
 
   dispatchEventSelectionChanged(_idx, _itemData, prevIdx = this.previousSelectedIdx , _prevItemData = this.getListItem(this.previousSelectedIdx))
