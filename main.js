@@ -150,18 +150,22 @@ class Smartstate extends utils.Adapter {
     {
         try
         {
-            if (state /*&& state.ack === true*/)
+            if (state)
             {
-                //this.log.warn(`State ${id} changed to ${state.val}  ACK=${state.ack}`);
+                this.log.debug(`State ${id} changed to ${state.val}  ACK=${state.ack}`);
 
                 // (re)calculate all the given smartstate values which are linked to this state
                 if(this.subscriptionSmartstateLink[id] && this.subscriptionSmartstateLink[id].links)
                 {
                     for (let linkIdx=0; linkIdx<this.subscriptionSmartstateLink[id].links.length; linkIdx++)
                     {
-                        // only add the ids for calculation into a stack buffer, this stack bu7ffer will
-                        // be processed and deleted by a timer method
-                        this.recalculationStack.push(this.subscriptionSmartstateLink[id].links[linkIdx]);
+                        const smartState = this.config.smartstate[id];
+                        if(!smartState.calcOnlyForACK || state.ack == true)
+                        {
+                            // only add the ids for calculation into a stack buffer, this stack buffer will
+                            // be processed and deleted by a timer method
+                            this.recalculationStack.push(this.subscriptionSmartstateLink[id].links[linkIdx]);
+                        }
                     }
                 }
                 else

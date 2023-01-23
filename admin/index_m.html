@@ -131,9 +131,12 @@
             // register some change events to know whats happening
             // yes this we can do dynamically, but for this load i'll take it manually
             $('#name').on('change', () => { onChangeCallback(); settingsChangedByUser() });
-            $('#id').on('change', () => { onChangeCallback(); settingsChangedByUser() })
-            $('#path').on('change', () => { onChangeCallback(); settingsChangedByUser() })
-            $('#calctype').on('change', () => { onChangeCallback(); settingsChangedByUser() })    
+            $('#id').on('change', () => { onChangeCallback(); settingsChangedByUser() });
+            $('#path').on('change', () => { onChangeCallback(); settingsChangedByUser() });
+            $('#calctype').on('change', () => { onChangeCallback(); settingsChangedByUser() });
+            $('#calcOnlyForACK').on('change', () => { onChangeCallback(); settingsChangedByUser() });
+
+            
             
             // we attach a 'leavingItem' callback to add some item validation
             const smartstateListElement = document.querySelector('#smartstatelist');
@@ -202,7 +205,8 @@
                         name: smartstate.name,
                         id: smartstate.id,
                         calctype: smartstate.calctype,
-                        path: smartstate.path
+                        path: smartstate.path,
+                        calcOnlyForACK : smartstate.calcOnlyForACK
                     });
                 }
             }
@@ -314,6 +318,7 @@
                 settings.smartstate[smartStateObjectId].path = smartStateData.path;
                 settings.smartstate[smartStateObjectId].function = smartStateData.function;
                 settings.smartstate[smartStateObjectId].objectId = smartStateObjectId;
+                settings.smartstate[smartStateObjectId].calcOnlyForACK = smartStateData.calcOnlyForACK;
 
                 // get the child settings from the temporary childs settings object
                 // be sure to make a copy of the object (we use the easy way for that because we can be sure we only have valid json)
@@ -552,13 +557,16 @@
                                 <i class="material-icons" id="idRefresh">refresh</i>
                             </div>
                             <div class="input-field col s3 m2 l1">
-                                <select id="calctype" class="value">
-                                </select>
+                                <select id="calctype" class="value"></select>
                                 <label class="translate" for="calctype">Typ:</label>
                             </div>
                             <div class="input-field col s8 m6 l3">
                                 <input id="path" type="text" class="value" />
                                 <label class="translate" for="path">Pfad:</label>
+                            </div>
+                            <div class="input-field col s8 m6 l3">
+                                <input id="calcOnlyForACK" type="checkbox" class="value" />
+                                <label class="translate" for="calcOnlyForACK">Calc only for ACK values</label>
                             </div>
                         </div>
 
