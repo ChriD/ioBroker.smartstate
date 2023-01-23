@@ -4,7 +4,7 @@
     <!--
         TODO:                       
             * implement user functions
-            * make overflow of id hidden            
+            * make text overflow of id/pattern in child table hidden
     -->
 
     <!-- Load ioBroker scripts and styles-->
@@ -109,6 +109,13 @@
                 updateId(_event.target.value); 
             }
 
+            // register to the 'onblur' event of the smart state path input control to be able to 
+            // automatically update the path
+            const settingsPathElement = document.querySelector('#path');           
+            settingsPathElement.onblur = (_event) => {
+                updatePath(_event.target.value); 
+            }
+
             // register to the 'onclick' event of the refresh button located beside the id input element
             // to be able to allow the user to refresh the id from the name by clicking on that icon
             let idRefreshElement = document.querySelector('#idRefresh');           
@@ -168,8 +175,9 @@
             settingsChangedByUser();
         }   
         
+
         // this method will be called when the user manually enters the id, it will be formatted and special 
-        // chars wiull be removed. If thats the case the user will get a notification
+        // chars will be removed. If thats the case the user will get a notification
         function updateId(_id)
         {
             let settingsIdElement = document.querySelector('#id');
@@ -181,7 +189,24 @@
                 notifier.warning(`ID ${_id} was automatically formatted to a valid IoBroker ID: ${$(settingsIdElement).val()}`);
 
             settingsChangedByUser();
-        }        
+        }
+
+
+        // this method will be called when the user manually enters the path, it will be formatted and special 
+        // chars will be removed. Furthermore the trailing '.' will be removed
+        function updatePath(_path)
+        {
+            let settingsPathElement = document.querySelector('#path');
+            $(settingsPathElement).val(formatPath(_path));
+            if (M) M.updateTextFields();
+            onChangeCallback();
+
+            if($(settingsPathElement).val() != _path)
+                notifier.warning(`Path ${_path} was automatically formatted to a valid IoBroker Path: ${$(settingsPathElement).val()}`);
+
+            settingsChangedByUser();
+        }
+
 
         // this method will populate the custom list element with the smart state items. it will also
         // add some listeneser for selection changed, item deleted and item added,....
@@ -229,6 +254,7 @@
                 $(settingsNameElement).focus();
             });
         }
+
 
         // this function may be called in the scope of this document of in the 'scope' of the list
         // because this method is attached to a callback function when chageing the selection of the list
@@ -576,7 +602,7 @@
                                             <tr>
                                                 <th data-name="_index" style="width: 40px" class="translate"></th>                                
                                                 <th data-name="type"  style="min-width: 100px" data-type="select" data-options="STATE;PATTERN" class="translate type">Type</th>                                    
-                                                <th data-name="idOrPattern" class="translate" style="min-width: 320px">Id/Pattern</th>                                                                                
+                                                <th data-name="idOrPattern" class="translate" style="min-width: 420px">Id/Pattern</th>                                                                                
                                                 <!--<th data-name="function" data-type="string" class="translate channel">Function</th>-->
                                                 <th data-buttons="delete up down" style="width: 120px"></th>
                                             </tr>

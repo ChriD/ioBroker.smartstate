@@ -12,8 +12,8 @@
 
 ## smartstate adapter for ioBroker
 
-With this adapter you can create states which are cummulations of other states<br>
-A good example is, if you want to create a state which count lights which are on (see examples)<br>
+With this adapter you can create states which are calculated by other states<br>
+A good example is when you want to create a state that counts the lights that are on (see examples)<br>
 The handling is very easy. Add a new smart state, define it's name and type and add child states which will be used to calculate the states value by the given type (operator)
 
 
@@ -28,11 +28,12 @@ Then you can add following parameters.
     | `Name` | The name of the smartstate |
     | `Id` | The id of the smartstate |
     | `Type` | Calculation type which defines how the smartstate uses the child to calculate its value |
+    | `Path` | The folder/path where the state should be
     | `Calc only for ACK values` | If checked, only state values which are acknowledged will trigger a recalulation |
 * Child Settings
     | Field | Description |
     |-------------|-------------|
-    | `Type` | the `state` type will allow a selection of one state<br>, the `pattern` type will allow a state selection pattern |
+    | `Type` | the `state` type will allow a selection of one state<br>the `pattern` type will allow a state selection pattern |
     | `Id/Pattern` | the state id or the pattern |        
 
 ## Important  
@@ -43,7 +44,8 @@ Those recursions are not caught by the validation and will lead to endless loops
 
 ## Example  
 
-Here is an example of a state which counts the light's which are on within a room (in this case kitchen) and another one which indicates if a light in the kitchen is on.
+Here is an example of a state that counts the lights that are on(in this case kitchen) and another one which indicates if a light in the kitchen is on.
+
 
 ## Changelog
 <!--

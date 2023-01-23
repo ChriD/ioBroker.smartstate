@@ -1,4 +1,4 @@
-// this function will format a string (in this case the name of the device) to a valid object id which can be used
+// this function will format a string to a valid object id which can be used
 // in the backend. The format will be done in the adapter backend because there we have 'FORBIDDEN_CHARS' available
 function formatObjectId(_value)
 {
@@ -16,6 +16,31 @@ function formatObjectId(_value)
 
     return validObjectId;
 }
+
+
+// this function will format a string to a valid path which can be used
+// in the backend. The format will be done in the adapter backend because there we have 'FORBIDDEN_CHARS' available
+function formatPath(_value)
+{
+    //FORBIDDEN_CHARS of iobroker: [^._\-/ :!#$%&()+=@^{}|~\p{Ll}\p{Lu}\p{Nd}]+
+    //const forbiddenChars = RegExp(/[^._\-/ :!#$%&()+=@^{}|~\p{Ll}\p{Lu}\p{Nd}]/);
+    let validPath = _value.replace(/ä/g, 'ae');
+    validPath = validPath.replace(/ö/g, 'oe');
+    validPath = validPath.replace(/ü/g, 'ue');
+    validPath = validPath.replace(/ß/g, 'ss');
+    validPath = validPath.replace(/Ä/g, 'Ae');
+    validPath = validPath.replace(/Ö/g, 'Oe;');
+    validPath = validPath.replace(/Ü/g, 'Ue;');
+    validPath = validPath.replace(/[^\w\s\.]/gi, '');
+    validPath = validPath.replace(/[\s\/]/g, '_');
+    // remove trailing '.'
+    validPath = validPath.replace(/\.+$/, '');
+    // remove staring '.'
+    validPath = validPath.replace(/^\.+/, '');
+
+    return validPath;
+}
+
 
 // this function will get the row index for an element which is within the child state grid or for the row
 // element itself

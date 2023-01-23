@@ -44,7 +44,6 @@ class Smartstate extends utils.Adapter {
      */
     async onReady()
     {
-        // TODO: create all states with default values so subscription will work????
         const smartStatesCreatedOrUpdated = new Array();
 
         // build subscriptions from the configuration
