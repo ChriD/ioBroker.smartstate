@@ -30,6 +30,7 @@ class Smartstate extends utils.Adapter {
             name: 'smartstate',
         });
 
+        this.stateCache = {};
         this.subscriptionSmartstateLink = {};
         this.recalculationStack = new Array();
 
@@ -63,7 +64,7 @@ class Smartstate extends utils.Adapter {
             for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
             {
                 const childObject = smartstate.childs[childIdx];
-                this.addSubscriptionToForeignState(key, childObject.idOrPattern, childObject.type);
+                this.addChildSubscriptionToForeignState(key, childObject);
             }
 
             // create (re)calculate the given smartstate value and set it
@@ -93,30 +94,30 @@ class Smartstate extends utils.Adapter {
     }
 
 
-    addSubscriptionToForeignState(_smartstateId, _patternOrId, _type)
+    addChildSubscriptionToForeignState(_smartstateId, _childObject)
     {
         // empyt id's or pattern will not be used
-        if(!_patternOrId)
+        if(!_childObject.patternOrId)
             return;
 
-        this.subscribeForeignStates(_patternOrId);
+        this.subscribeForeignStates(_childObject.patternOrId);
 
         // create a lookup table/object for fast lookup of smartstates for a given subscription change
-        if(!this.subscriptionSmartstateLink[_patternOrId])
+        if(!this.subscriptionSmartstateLink[_childObject.patternOrId])
         {
-            this.subscriptionSmartstateLink[_patternOrId] = {};
-            this.subscriptionSmartstateLink[_patternOrId].links = new Array();
+            this.subscriptionSmartstateLink[_childObject.patternOrId] = {};
+            this.subscriptionSmartstateLink[_childObject.patternOrId].links = new Array();
+            this.subscriptionSmartstateLink[_childObject.patternOrId].childObject = _childObject;
         }
 
         // get all state id's which are within the selector if the smartstate child is of type 'selector'
         // otherwise we do have an state key which we csan insert directly
         if(_type == STATECHILDTYPE.STATE)
         {
-            this.subscriptionSmartstateLink[_patternOrId].links.push(_smartstateId);
+            this.subscriptionSmartstateLink[_childObject.patternOrId].links.push(_smartstateId);
         }
         else
         {
-            // TODO: @@@
             try
             {
                 const states = this.getStates(_patternOrId);
@@ -125,13 +126,14 @@ class Smartstate extends utils.Adapter {
                 {
                     for(let idx=0; idx<states.length; idx++)
                     {
+                        // TODO: @@@
                         this.log.error(JSON.stringify(states[idx]));
                     }
                 }
             }
             catch(_error)
             {
-                this.log.error(`Added subscription to ${_patternOrId}`);
+                this.log.error(`Error adding subscription pattern: ${_error.toString()}`);
             }
         }
 
@@ -175,6 +177,9 @@ class Smartstate extends utils.Adapter {
                         const smartState = this.config.smartstate[this.subscriptionSmartstateLink[id].links[linkIdx]];
                         if(!smartState.calcOnlyForACK || state.ack == true)
                         {
+                            // update the state cache with the changed state object
+                            this.stateCache[id] = state;
+
                             // only add the ids for calculation into a stack buffer, this stack buffer will
                             // be processed and deleted by a timer method
                             this.recalculationStack.push(this.subscriptionSmartstateLink[id].links[linkIdx]);
@@ -281,64 +286,97 @@ class Smartstate extends utils.Adapter {
             // run through the childs and calculate the overall value of the smart state
             for(let childIdx=0; childIdx<smartState.childs.length; childIdx++)
             {
+                const stateIds = new Array();
                 const childObject = smartState.childs[childIdx];
-                const state = await this.getForeignStateAsync(childObject.idOrPattern);
 
-                this.log.debug(`Calculation-Child: ${childObject.idOrPattern}: ${state.val}`);
-
-                let value;
-                if(childObject.function)
-                    value = this.evaluateFunction(childObject.function, { state: state, value: state.val, childCount: smartState.childs.length });
-                else
-                    value = state.val;
-
-                // store the first value for further calculations
-                firstValue = childIdx === 0 ? value : firstValue;
-
-                // for each calculation type we have to do another calculation using the child values
-                // see the different cases for further info. Its really a very easy approach but it will be sufficient for many cases
-                switch(smartState.calctype)
+                // if the child type is a pattern, we have to get all the states for this pattern to do the
+                // calculation for. Of course if a user goes crazy and uses a pattern where many states are
+                // selected this wont be the best thing for performance.
+                if(childObject.type == STATECHILDTYPE.PATTERN)
                 {
-                    case STATECALCTYPE.COUNT:
-                        smartValue += value ? 1 : 0;
-                        break;
+                    const patternLinks = this.subscriptionSmartstateLink[childObject.idOrPattern].links;
+                    for(let patternLinksIdx=0; patternLinksIdx<patternLinks.length; patternLinksIdx++)
+                    {
+                        stateIds.push(patternLinks[patternLinksIdx]);
+                    }
+                }
+                else
+                {
+                    stateIds.push(childObject.idOrPattern);
+                }
 
-                    case STATECALCTYPE.SUM:
-                    case STATECALCTYPE.AVG:
-                        smartValue += value;
-                        break;
+                // after expanding the pattern's to id's we have all id's in the stateIds object and can run
+                // through this object to get all states for calculation. In future we may cache the states so
+                // we do not need to call 'getForeignStateAsync' and keep the load smaller 
+                for(let stateIdx=0; stateIdx<stateIds.length; stateIdx++)
+                {
+                    // the state should be 'cached' by the state change event. In some cases we may not have the
+                    // state in the cache because it hasnt changed since the start of the adapter, those states
+                    // will be requested by an extra call to the state backend
+                    const state = this.stateCache[stateIds[stateIdx]];
+                    if(!state)
+                    {
+                        this.log.debug(`State ${stateIds[stateIdx]} not found in cache, i am requesting now`);
+                        state = await this.getForeignStateAsync(stateIds[stateIdx]);
+                        this.stateCache[stateIds[stateIdx] = state;
+                    }
 
-                    case STATECALCTYPE.OR:
-                        smartValue = smartValue || (value ? true : false);
-                        break;
+                    this.log.debug(`Calculation-Child: ${childObject.idOrPattern}, state: ${stateIds[stateIdx]}, value: ${state.val}`);
 
-                    case STATECALCTYPE.AND:
-                        smartValue = smartValue && (value ? true : false);
-                        break;
+                    let value;
+                    if(childObject.function)
+                        value = this.evaluateFunction(childObject.function, { state: state, value: state.val, childCount: smartState.childs.length });
+                    else
+                        value = state.val;
 
-                    case STATECALCTYPE.EQUALS:
-                        if(value != firstValue)
-                            smartValue = false;
-                        break;
+                    // store the first value for further calculations
+                    firstValue = childIdx === 0 ? value : firstValue;
 
-                    case STATECALCTYPE.MIN:
-                        if(value < curMinValue)
-                        {
-                            curMinValue = value;
-                            smartValue = curMinValue;
-                        }
-                        break;
+                    // for each calculation type we have to do another calculation using the child values
+                    // see the different cases for further info. Its really a very easy approach but it will be sufficient for many cases
+                    switch(smartState.calctype)
+                    {
+                        case STATECALCTYPE.COUNT:
+                            smartValue += value ? 1 : 0;
+                            break;
 
-                    case STATECALCTYPE.MAX:
-                        if(value > curMaxValue)
-                        {
-                            curMaxValue = value;
-                            smartValue = curMaxValue;
-                        }
-                        break;
+                        case STATECALCTYPE.SUM:
+                        case STATECALCTYPE.AVG:
+                            smartValue += value;
+                            break;
 
-                    default:
-                        this.log.error(`Wrong or not implemented calculation type: ${smartState.calctype}`);
+                        case STATECALCTYPE.OR:
+                            smartValue = smartValue || (value ? true : false);
+                            break;
+
+                        case STATECALCTYPE.AND:
+                            smartValue = smartValue && (value ? true : false);
+                            break;
+
+                        case STATECALCTYPE.EQUALS:
+                            if(value != firstValue)
+                                smartValue = false;
+                            break;
+
+                        case STATECALCTYPE.MIN:
+                            if(value < curMinValue)
+                            {
+                                curMinValue = value;
+                                smartValue = curMinValue;
+                            }
+                            break;
+
+                        case STATECALCTYPE.MAX:
+                            if(value > curMaxValue)
+                            {
+                                curMaxValue = value;
+                                smartValue = curMaxValue;
+                            }
+                            break;
+
+                        default:
+                            this.log.error(`Wrong or not implemented calculation type: ${smartState.calctype}`);
+                    }
                 }
             }
 

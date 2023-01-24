@@ -40,6 +40,7 @@ Then you can add following parameters.
 
 * A smartstate can use another smartstate as child state, but please be sure you do not create a recursion (`State A` has `State B` as child and `State B` has `State A` as child).
 Those recursions are not caught by the validation and will lead to endless loops and therfore will break the adapter or even the whole system 
+* The adapter converts pattern subscription to state subscriptions, so states created in other adapters (after the smartstate adapter was started) which matches a pattern in a state child will not apply to the pattern selection. In this cas a restart of the smartstate adapter is necessary.
 * Using the state selector dialog in the child table may take a while when first opening. I am open for contributions to open a better, newer dialog
 
 ## Example  
