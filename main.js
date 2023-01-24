@@ -48,6 +48,9 @@ class Smartstate extends utils.Adapter {
         // a smartstate, we have a stack which will be processed synchronous
         this.recalculationStack = new Array();
 
+        // will be used to clear any pending timout when closing the adapter
+        this.stackProcessingTimeoutId = 0;
+
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
         this.on('unload', this.onUnload.bind(this));
@@ -169,6 +172,8 @@ class Smartstate extends utils.Adapter {
      */
     onUnload(callback) {
         try {
+            if(this.stackProcessingTimeoutId)
+                this.clearTimeout(this.stackProcessingTimeoutId);
             // we have nothing to do when unloading the adapter
             callback();
         } catch (e) {
@@ -227,7 +232,7 @@ class Smartstate extends utils.Adapter {
             const smartStateId = this.recalculationStack.shift();
             await this.recalculateSmartState(smartStateId);
         }
-        this.setTimeout(this.calculateStatesInStack.bind(this), 50);
+        this.stackProcessingTimeoutId = this.setTimeout(this.calculateStatesInStack.bind(this), 50);
     }
 
 

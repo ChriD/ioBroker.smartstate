@@ -7,6 +7,7 @@
                 "en": "initial release",
                 "de": "Erstveröffentlichung",
                 "ru": "Начальная версия",
+                "uk": "Начальная версия",
                 "pt": "lançamento inicial",
                 "nl": "Eerste uitgave",
                 "fr": "Première version",
@@ -16,11 +17,11 @@
                 "zh-cn": "首次出版"
             }
         },
-        "title": "SmartState",
         "titleLang": {
             "en": "SmartState",
             "de": "SmartState",
             "ru": "SmartState",
+            "uk": "SmartState",
             "pt": "Estado Inteligente",
             "nl": "SmartState",
             "fr": "État intelligent",
@@ -33,6 +34,7 @@
             "en": "smartstate",
             "de": "smartstate",
             "ru": "умное состояние",
+            "uk": "умное состояние",
             "pt": "estado inteligente",
             "nl": "slimme staat",
             "fr": "état intelligent",
@@ -48,8 +50,10 @@
             "counter",
             "sum",
             "state",
-            "OR",
-            "AND"
+            "or",
+            "and",
+            "smart",
+            "calc"
         ],
         "license": "MIT",
         "platform": "Javascript/Node.js",
