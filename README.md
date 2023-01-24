@@ -65,9 +65,9 @@ Those smart states settings will create following states in the object tree
     ### **WORK IN PROGRESS**
 -->
 
-### **WORK IN PROGRESS**
+### 0.0.1 (2023-01-24)
 
-* (ChriD) initial release
+-   (ChriD) initial version
 
 ## License
 MIT License
