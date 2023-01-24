@@ -120,10 +120,11 @@ class Smartstate extends utils.Adapter {
         }
         else
         {
+            let states;
             try
             {
-                const states = this.getForeignStates(_childObject.idOrPattern);
-                this.log.error(states);
+                states = this.getForeignStates(_childObject.idOrPattern);
+                //this.log.error(states);
                 /*
                 if(states)
                 {
@@ -138,6 +139,7 @@ class Smartstate extends utils.Adapter {
             catch(_error)
             {
                 this.log.error(`Error getting states for subscription pattern: ${_error.toString()}`);
+                this.log.error(states);
             }
         }
 
