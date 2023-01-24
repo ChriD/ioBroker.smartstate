@@ -52,9 +52,11 @@ In the second screenshot you can see that we are using the first smartstate for 
 ![image](https://user-images.githubusercontent.com/2505067/214155618-2c963898-1efd-46f1-becf-6818543240f1.png)
 
 This one shows the use of a pattern to determine if any dmx light is on
+![image](https://user-images.githubusercontent.com/2505067/214383174-d4d23091-d2fb-4a86-a294-998a0af54dc9.png)
 
 Those settings will create following states in the object tree
-![image](https://user-images.githubusercontent.com/2505067/214156420-158d72b2-1c55-4b21-9c44-eb74b19126c8.png)
+![image](https://user-images.githubusercontent.com/2505067/214383091-577a1dc9-10a5-4478-af3f-a8374a5a8487.png)
+
 
 
 ## Changelog
