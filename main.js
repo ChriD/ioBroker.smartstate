@@ -99,30 +99,30 @@ class Smartstate extends utils.Adapter {
         this.log.debug(`Adding subscription to ${JSON.stringify(_childObject)}`);
 
         // empty id's or pattern will not be used
-        if(!_childObject.patternOrId)
+        if(!_childObject.idOrPattern)
             return;
 
-        this.subscribeForeignStates(_childObject.patternOrId);
+        this.subscribeForeignStates(_childObject.idOrPattern);
 
         // create a lookup table/object for fast lookup of smartstates for a given subscription change
-        if(!this.subscriptionSmartstateLink[_childObject.patternOrId])
+        if(!this.subscriptionSmartstateLink[_childObject.idOrPattern])
         {
-            this.subscriptionSmartstateLink[_childObject.patternOrId] = {};
-            this.subscriptionSmartstateLink[_childObject.patternOrId].links = new Array();
-            this.subscriptionSmartstateLink[_childObject.patternOrId].childObject = _childObject;
+            this.subscriptionSmartstateLink[_childObject.idOrPattern] = {};
+            this.subscriptionSmartstateLink[_childObject.idOrPattern].links = new Array();
+            this.subscriptionSmartstateLink[_childObject.idOrPattern].childObject = _childObject;
         }
 
         // get all state id's which are within the selector if the smartstate child is of type 'selector'
         // otherwise we do have an state key which we csan insert directly
         if(_childObject.type == STATECHILDTYPE.STATE)
         {
-            this.subscriptionSmartstateLink[_childObject.patternOrId].links.push(_smartstateId);
+            this.subscriptionSmartstateLink[_childObject.idOrPattern].links.push(_smartstateId);
         }
         else
         {
             try
             {
-                const states = this.getStates(_patternOrId);
+                const states = this.getStates(idOrPattern);
                 this.log.error(JSON.stringify(states));
                 if(states)
                 {
@@ -139,7 +139,7 @@ class Smartstate extends utils.Adapter {
             }
         }
 
-        this.log.debug(`Added subscription to ${_patternOrId}`);
+        this.log.debug(`Added subscription to ${idOrPattern}`);
     }
 
 

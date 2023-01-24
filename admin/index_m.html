@@ -345,7 +345,7 @@
                 // be sure to make a copy of the object (we use the easy way for that because we can be sure we only have valid json)
                 settings.smartstate[smartStateObjectId].childs = JSON.parse(JSON.stringify(childSettings[smartStateObjectId]));
 
-                // the patternOrId has to be set
+                // the idOrPattern has to be set
                 for(let childIdx=0; childIdx<settings.smartstate[smartStateObjectId].childs.length; childIdx++)
                 {
                     const childObject = settings.smartstate[smartStateObjectId].childs[childIdx];
