@@ -122,7 +122,7 @@ class Smartstate extends utils.Adapter {
         {
             try
             {
-                const states = this.getStates(_childObject.idOrPattern);
+                const states = this.getForeignStates(_childObject.idOrPattern);
                 this.log.error(JSON.stringify(states));
                 if(states)
                 {
