@@ -51,6 +51,8 @@ Here is an example of a state that counts the lights that are on(in this case ki
 In the second screenshot you can see that we are using the first smartstate for generating a boolean state which will indicate if a light is on. That can be done by using the `or` operator
 ![image](https://user-images.githubusercontent.com/2505067/214155618-2c963898-1efd-46f1-becf-6818543240f1.png)
 
+This one shows the use of a pattern to determine if any dmx light is on
+
 Those settings will create following states in the object tree
 ![image](https://user-images.githubusercontent.com/2505067/214156420-158d72b2-1c55-4b21-9c44-eb74b19126c8.png)
 
