@@ -30,9 +30,22 @@ class Smartstate extends utils.Adapter {
             name: 'smartstate',
         });
 
+        // a simple state cache object which will be filled/set when a subscription will call the 'onChanged' event
+        // this is here so we do not need to read every value with 'getStateAsync' because there is no need to if we
+        // already subscribed to it
         this.stateCache = {};
+
+        // this object will hold id's for a pattern state. It will be filled on adapter startup when the adapter 
+        // subscribes to all states he need for calculation. It's here for fast access the ids within a pattern
         this.patternStates = {};
+
+        // a helper object so we can easily check which smartstates we have to recalulate when a subscribed state
+        // has beeing changed. It will be filled on startup of the adapter when subscribing to states
         this.subscriptionSmartstateLink = {};
+
+        // a stack which will be processed in intervals to recalculate smartstates which do have a child state
+        // which was beeing changed. Due state changes may occur very fast and maybe would interfere calculating
+        // a smartstate, we have a stack which will be processed synchronous
         this.recalculationStack = new Array();
 
         this.on('ready', this.onReady.bind(this));
@@ -293,6 +306,9 @@ class Smartstate extends utils.Adapter {
             }
 
             // run through the childs and calculate the overall value of the smart state
+            // ATTENTION: We have built it that way to be a little more versatile when we may add some
+            // features to the adapter (like executing functions for every state value which is already
+            // prepared but not tested).
             for(let childIdx=0; childIdx<smartState.childs.length; childIdx++)
             {
                 const stateIds = new Array();
@@ -300,7 +316,7 @@ class Smartstate extends utils.Adapter {
 
                 // if the child type is a pattern, we have to get all the states for this pattern to do the
                 // calculation for. Of course if a user goes crazy and uses a pattern where many states are
-                // selected this wont be the best thing for performance.
+                // selected this won't be the best thing for performance.
                 if(childObject.type == STATECHILDTYPE.PATTERN)
                 {
                     const patternStates = this.patternStates[childObject.idOrPattern];
