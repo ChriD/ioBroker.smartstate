@@ -64,7 +64,7 @@ class Smartstate extends utils.Adapter {
             for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
             {
                 const childObject = smartstate.childs[childIdx];
-                this.addChildSubscriptionToForeignState(key, childObject);
+                await this.addChildSubscriptionToForeignState(key, childObject);
             }
 
             // create (re)calculate the given smartstate value and set it
@@ -94,7 +94,7 @@ class Smartstate extends utils.Adapter {
     }
 
 
-    addChildSubscriptionToForeignState(_smartstateId, _childObject)
+    async addChildSubscriptionToForeignState(_smartstateId, _childObject)
     {
         this.log.debug(`Adding subscription to ${JSON.stringify(_childObject)}`);
 
@@ -123,8 +123,8 @@ class Smartstate extends utils.Adapter {
             let states;
             try
             {
-                states = this.getForeignStates(_childObject.idOrPattern);
-                //this.log.error(states);
+                states = await this.getForeignStatesAsync(_childObject.idOrPattern);
+                this.log.error(states);
                 /*
                 if(states)
                 {
@@ -139,7 +139,6 @@ class Smartstate extends utils.Adapter {
             catch(_error)
             {
                 this.log.error(`Error getting states for subscription pattern: ${_error.toString()}`);
-                this.log.error(states);
             }
         }
 
