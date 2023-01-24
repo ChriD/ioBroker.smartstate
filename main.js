@@ -114,6 +114,8 @@ class Smartstate extends utils.Adapter {
 
         // get all state id's which are within the selector if the smartstate child is of type 'selector'
         // otherwise we do have an state key which we csan insert directly
+        this.log.error(_childObject.type);
+        this.log.error(STATECHILDTYPE.STATE);
         if(_childObject.type == STATECHILDTYPE.STATE)
         {
             this.subscriptionSmartstateLink[_childObject.idOrPattern].links.push(_smartstateId);
@@ -122,7 +124,7 @@ class Smartstate extends utils.Adapter {
         {
             try
             {
-                const states = this.getStates(idOrPattern);
+                const states = this.getStates(_childObject.idOrPattern);
                 this.log.error(JSON.stringify(states));
                 if(states)
                 {
