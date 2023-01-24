@@ -109,7 +109,6 @@ class Smartstate extends utils.Adapter {
         {
             this.subscriptionSmartstateLink[_childObject.idOrPattern] = {};
             this.subscriptionSmartstateLink[_childObject.idOrPattern].links = new Array();
-            this.subscriptionSmartstateLink[_childObject.idOrPattern].childObject = _childObject;
         }
 
         // get all state id's which are within the selector if the smartstate child is of type 'selector'
@@ -124,11 +123,15 @@ class Smartstate extends utils.Adapter {
             try
             {
                 states = await this.getForeignStatesAsync(_childObject.idOrPattern);
-                this.log.error(JSON.stringify(states));
                 if(states)
                 {
                     for (const [key, value] of Object.entries(states))
                     {
+                        if(!this.subscriptionSmartstateLink[key])
+                        {
+                            this.subscriptionSmartstateLink[key] = {};
+                            this.subscriptionSmartstateLink[key].links = new Array();
+                        }
                         this.subscriptionSmartstateLink[key].links.push(_smartstateId);
                     }
                 }
