@@ -313,7 +313,7 @@ class Smartstate extends utils.Adapter {
                     // the state should be 'cached' by the state change event. In some cases we may not have the
                     // state in the cache because it hasnt changed since the start of the adapter, those states
                     // will be requested by an extra call to the state backend
-                    const state = this.stateCache[stateIds[stateIdx]];
+                    let state = this.stateCache[stateIds[stateIdx]];
                     if(!state)
                     {
                         this.log.debug(`State ${stateIds[stateIdx]} not found in cache, i am requesting now`);
