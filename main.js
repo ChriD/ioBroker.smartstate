@@ -124,8 +124,6 @@ class Smartstate extends utils.Adapter {
             try
             {
                 states = await this.getForeignStatesAsync(_childObject.idOrPattern);
-                this.log.error(states);
-                /*
                 if(states)
                 {
                     for(let idx=0; idx<states.length; idx++)
@@ -134,7 +132,6 @@ class Smartstate extends utils.Adapter {
                         this.log.error(JSON.stringify(states[idx]));
                     }
                 }
-                */
             }
             catch(_error)
             {
