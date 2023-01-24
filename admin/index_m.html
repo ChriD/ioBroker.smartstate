@@ -2,11 +2,9 @@
 <head>
 
     <!--
-        TODO:                 
-            * check for empty Id/pattern  
+        TODO:
             * PATTERN kills adapter?!?!    
             * implement user functions
-            * make text overflow of id/pattern in child table hidden
     -->
 
     <!-- Load ioBroker scripts and styles-->
@@ -142,8 +140,6 @@
             $('#calctype').on('change', () => { onChangeCallback(); settingsChangedByUser() });
             $('#calcOnlyForACK').on('change', () => { onChangeCallback(); settingsChangedByUser() });
 
-            
-            
             // we attach a 'leavingItem' callback to add some item validation
             const smartstateListElement = document.querySelector('#smartstatelist');
             smartstateListElement.leavingItemCallback = (_itemData) => {
@@ -350,7 +346,7 @@
                 settings.smartstate[smartStateObjectId].childs = JSON.parse(JSON.stringify(childSettings[smartStateObjectId]));
 
                 // the patternOrId has to be set
-                for(let childIdx=1; childIdx<settings.smartstate[smartStateObjectId].childs.length; childIdx++)
+                for(let childIdx=0; childIdx<settings.smartstate[smartStateObjectId].childs.length; childIdx++)
                 {
                     const childObject = settings.smartstate[smartStateObjectId].childs[childIdx];
                     if(!childObject.idOrPattern)
@@ -410,6 +406,7 @@
                 childSettings[objectKey] = table2values('childList');    
             }                
         }
+        
 
         // this method will create some kind of object id which we can use for identifying a smartstate
         // we use this so we can have same names of smartstates when the path differs
