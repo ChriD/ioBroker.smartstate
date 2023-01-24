@@ -95,6 +95,10 @@ class Smartstate extends utils.Adapter {
 
     addSubscriptionToForeignState(_smartstateId, _patternOrId, _type)
     {
+        // empyt id's or pattern will not be used
+        if(!_patternOrId)
+            return;
+
         this.subscribeForeignStates(_patternOrId);
 
         // create a lookup table/object for fast lookup of smartstates for a given subscription change
@@ -103,7 +107,8 @@ class Smartstate extends utils.Adapter {
             this.subscriptionSmartstateLink[_patternOrId] = {};
             this.subscriptionSmartstateLink[_patternOrId].links = new Array();
         }
-        // TODO: get all state id's which are within the selector if the smartstate child is of type 'selector'
+
+        // get all state id's which are within the selector if the smartstate child is of type 'selector'
         // otherwise we do have an state key which we csan insert directly
         if(_type == STATECHILDTYPE.STATE)
         {
@@ -112,13 +117,21 @@ class Smartstate extends utils.Adapter {
         else
         {
             // TODO: @@@
-            const states = this.getStates(_patternOrId);
-            if(states)
+            try
             {
-                for(let idx=0; idx<states.length; idx++)
+                const states = this.getStates(_patternOrId);
+                this.log.error(JSON.stringify(states));
+                if(states)
                 {
-                    this.log.error(JSON.stringify(states[idx]));
+                    for(let idx=0; idx<states.length; idx++)
+                    {
+                        this.log.error(JSON.stringify(states[idx]));
+                    }
                 }
+            }
+            catch(_error)
+            {
+                this.log.error(`Added subscription to ${_patternOrId}`);
             }
         }
 
