@@ -17,8 +17,10 @@
     "counter",
     "sum",
     "state",
-    "OR",
-    "AND"
+    "or",
+    "and",
+    "smart",
+    "calc"
   ],
   "repository": {
     "type": "git",
