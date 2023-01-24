@@ -127,10 +127,9 @@ class Smartstate extends utils.Adapter {
                 this.log.error(JSON.stringify(states));
                 if(states)
                 {
-                    for(let idx=0; idx<states.length; idx++)
+                    for (const [key, value] of Object.entries(states))
                     {
-                        // TODO: @@@
-                        this.log.error(JSON.stringify(states[idx]));
+                        this.subscriptionSmartstateLink[key].links.push(_smartstateId);
                     }
                 }
             }
