@@ -31,6 +31,7 @@ class Smartstate extends utils.Adapter {
         });
 
         this.stateCache = {};
+        this.patternStates = {};
         this.subscriptionSmartstateLink = {};
         this.recalculationStack = new Array();
 
@@ -119,10 +120,12 @@ class Smartstate extends utils.Adapter {
         }
         else
         {
-            let states;
+            if(!this.patternStates[_childObject.idOrPattern])
+                this.patternStates[_childObject.idOrPattern] = new Array();
+
             try
             {
-                states = await this.getForeignStatesAsync(_childObject.idOrPattern);
+                const states = await this.getForeignStatesAsync(_childObject.idOrPattern);
                 if(states)
                 {
                     for (const [key, value] of Object.entries(states))
@@ -133,6 +136,7 @@ class Smartstate extends utils.Adapter {
                             this.subscriptionSmartstateLink[key].links = new Array();
                         }
                         this.subscriptionSmartstateLink[key].links.push(_smartstateId);
+                        this.patternStates[_childObject.idOrPattern].push(key);
                     }
                 }
             }
@@ -299,10 +303,10 @@ class Smartstate extends utils.Adapter {
                 // selected this wont be the best thing for performance.
                 if(childObject.type == STATECHILDTYPE.PATTERN)
                 {
-                    const patternLinks = this.subscriptionSmartstateLink[childObject.idOrPattern].links;
-                    for(let patternLinksIdx=0; patternLinksIdx<patternLinks.length; patternLinksIdx++)
+                    const patternStates = this.patternStates[childObject.idOrPattern];
+                    for(let patternStatesIdx=0; patternStatesIdx<patternStates.length; patternStatesIdx++)
                     {
-                        stateIds.push(patternLinks[patternLinksIdx]);
+                        stateIds.push(patternStates[patternStatesIdx]);
                     }
                 }
                 else
