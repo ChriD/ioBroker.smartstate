@@ -96,7 +96,9 @@ class Smartstate extends utils.Adapter {
 
     addChildSubscriptionToForeignState(_smartstateId, _childObject)
     {
-        // empyt id's or pattern will not be used
+        this.log.debug(`Adding subscription to ${_childObject.toString()}`);
+
+        // empty id's or pattern will not be used
         if(!_childObject.patternOrId)
             return;
 
