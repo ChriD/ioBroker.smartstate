@@ -318,7 +318,7 @@ class Smartstate extends utils.Adapter {
                     {
                         this.log.debug(`State ${stateIds[stateIdx]} not found in cache, i am requesting now`);
                         state = await this.getForeignStateAsync(stateIds[stateIdx]);
-                        this.stateCache[stateIds[stateIdx] = state;
+                        this.stateCache[stateIds[stateIdx]] = state;
                     }
 
                     this.log.debug(`Calculation-Child: ${childObject.idOrPattern}, state: ${stateIds[stateIdx]}, value: ${state.val}`);
