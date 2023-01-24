@@ -96,7 +96,7 @@ class Smartstate extends utils.Adapter {
 
     addChildSubscriptionToForeignState(_smartstateId, _childObject)
     {
-        this.log.debug(`Adding subscription to ${_childObject.toString()}`);
+        this.log.debug(`Adding subscription to ${JSON.stringify(_childObject)}`);
 
         // empty id's or pattern will not be used
         if(!_childObject.patternOrId)
