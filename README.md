@@ -34,7 +34,8 @@ Then you can add following parameters.
     | Field | Description |
     |-------------|-------------|
     | `Type` | the `state` type will allow a selection of one state<br>the `pattern` type will allow a state selection pattern |
-    | `Id/Pattern` | the state id or the pattern |        
+    | `Id/Pattern` | the state id or the pattern |
+    | `Value function` | a valid javacsript code to change the value for the state before the operator/calculation type is applied eg: `return !value` |
 
 ## Important  
 
@@ -54,6 +55,9 @@ In the second screenshot you can see that we are using the first smartstate for 
 This one shows the use of a pattern to determine if any dmx light is on
 ![image](https://user-images.githubusercontent.com/2505067/214383174-d4d23091-d2fb-4a86-a294-998a0af54dc9.png)
 
+And here we use a function to count all lights (in this case kitchen) which are off
+
+
 Those smart states settings will create following states in the object tree
 ![image](https://user-images.githubusercontent.com/2505067/214383091-577a1dc9-10a5-4478-af3f-a8374a5a8487.png)
 
@@ -64,6 +68,9 @@ Those smart states settings will create following states in the object tree
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+
+-   (ChriD) added ability to define a 'value function' which can be used to change the value for the state before the operator is applied
 
 ### 0.0.1 (2023-01-24)
 

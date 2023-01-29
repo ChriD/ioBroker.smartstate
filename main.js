@@ -437,8 +437,8 @@ class Smartstate extends utils.Adapter {
         try
         {
             const functionString = `${_functionPart}`;
-            const evalFunction = new Function ('params', functionString);
-            value = evalFunction(_params);
+            const evalFunction = new Function ('value', 'params', functionString);
+            value = evalFunction(_params.value, _params);
         }
         catch(_error)
         {

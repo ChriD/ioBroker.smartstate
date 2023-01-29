@@ -25,9 +25,11 @@
     <script src="libs/awesome-notifications/modern.var.js" type="text/javascript"></script>
     <script src="libs/common/common.js" type="text/javascript"></script>  
     <script src="libs/common/stateSelectionDialogInit.js" type="text/javascript"></script>    
+    <script src="libs/micromodal/micromodal.min.js" type="text/javascript"></script>    
     <script src="words.js" type="text/javascript"></script>
 
     <link rel="stylesheet" type="text/css" href="libs/awesome-notifications/style.css" />
+    <link rel="stylesheet" type="text/css" href="libs/micromodal/micromodal.css" />
     <link rel="stylesheet" type="text/css" href="style.css" />        
     
     <script type="text/javascript">
@@ -76,6 +78,8 @@
             if (!_settings) 
                 return;
                         
+            MicroModal.init();
+
             onChangeCallback = _onChange;            
 
             // setup the selection box for the calculation type of the smartstate by using the constant
@@ -143,7 +147,7 @@
             const smartstateListElement = document.querySelector('#smartstatelist');
             smartstateListElement.leavingItemCallback = (_itemData) => {
                 return validateItemData(_itemData);
-            }
+            }            
                        
             // be sure the save buttons are disabled after loading the configuration/settings
             _onChange(false);
@@ -246,7 +250,7 @@
                     $(settingsIdElement).val(STATECALCTYPE.OR).select();
 
                 // automatically set the cursor to the name on new items because the user
-                // definitly wan'ts to set the name for a state                
+                // definitly wan'ts to set the name for a state
                 const settingsNameElement = document.querySelector('#name');
                 $(settingsNameElement).focus();
             });
@@ -275,8 +279,8 @@
 
                 // check if there are duplicate id's. If that's the case the validation of the item has to fail
                 // Fell free to change this to better and nice code.
-                const objectKeyItemData = buildObjectIdFromSmartStateObject(_itemData);                 
-                const smartstateListElement = document.querySelector('#smartstatelist');                
+                const objectKeyItemData = buildObjectIdFromSmartStateObject(_itemData);
+                const smartstateListElement = document.querySelector('#smartstatelist');
                 {           
                     let counter = 0;
                     for (const [key, smartstate] of Object.entries(smartstateListElement.listData))
@@ -308,7 +312,7 @@
         // (list, input values, tables, ...) and from the data caches
         function getSettings()
         {                                    
-            const smartstateListElement = document.querySelector('#smartstatelist');   
+            const smartstateListElement = document.querySelector('#smartstatelist');
             
             // be sure the values of the current selected items are stored correctly, so we force an update
             // to copy the current gui values to the cache and list
@@ -328,7 +332,7 @@
                 
                 // no need to check it here again, already done in validateItemData
                 // if ID already exists we have to throw an error, id duplicates are not allowed
-                //if(settings.smartstate[smartStateObjectId])                                                                            
+                //if(settings.smartstate[smartStateObjectId])
                 //    throw Error(`Duplicate ID's in configuration: ${smartStateObjectId}`);
 
                 settings.smartstate[smartStateObjectId] = settings.smartstate[smartStateData.id] ? settings.smartstate[smartStateData.id] : {};
@@ -446,13 +450,13 @@
 
                 // inject the 'select objectId' button for lookup on existing object id's. This icon
                 // will behave as a button and will allow the user to open a state selection dialog                
-                const columnElement = rowElement.querySelector('input[data-name="idOrPattern"]').parentElement;                                
+                const columnIdOrPatternElement = rowElement.querySelector('input[data-name="idOrPattern"]').parentElement;                                
                 let iElement = document.createElement("i");
                 iElement.classList.add('material-icons');
                 iElement.setAttribute("data-name", "statusidLookup");
                 iElement.innerHTML = 'folder_open';
-                let deviceIdUpdateButtonElement = columnElement.appendChild(iElement);                
-                deviceIdUpdateButtonElement.onclick = (_event) => {
+                let selectIdButtonElement = columnIdOrPatternElement.appendChild(iElement);                
+                selectIdButtonElement.onclick = (_event) => {
                     // when the icon is beeing clicked we have to init the state selection dialog and
                     // handle it's return value if beeing closed with 'OK'.
                     let rowIndex = getTableRowDataIndex(_event.target);
@@ -464,6 +468,20 @@
                         });
                     });
                 }
+
+                // inject the 'value function' button which will open a popup for js code entry
+                /*
+                const columnFunctionViewerElement = rowElement.querySelector('input[data-name="function"]').parentElement;                                
+                iElement = document.createElement("i");
+                iElement.classList.add('material-icons');
+                iElement.setAttribute("data-name", "functionViewer");
+                iElement.innerHTML = 'code';
+                let functionButtonElement = columnFunctionViewerElement.appendChild(iElement);                
+                functionButtonElement.onclick = (_event) => {                    
+                    MicroModal.show('modal-codeEditor');
+                }
+                */
+
                 
                 // the initial visibilty of the icon for opening the state selection dialog has to be set                
                 let rowIndex = getTableRowDataIndex(rowElement);
@@ -517,20 +535,20 @@
                 <div class="help-link" style="padding-right: 15px;">   
                     <a class="btn-floating btn-small waves-effect waves-light" href="https://github.com/ChriD/iobroker.smartstate/blob/master/README.md" target="_blank" rel="noreferrer">       
                         <i class="material-icons">live_help</i>
-                    </a>   
-                    <a class="btn-floating btn-small waves-effect waves-light adapter-config-load" title="Load configuration from file">     
-                        <i class="material-icons">file_upload</i>   
-                    </a>   
-                    <a class="btn-floating btn-small waves-effect waves-light adapter-config-save" title="Save configuration to file">       
-                        <i class="material-icons">file_download</i>   
+                    </a>
+                    <a class="btn-floating btn-small waves-effect waves-light adapter-config-load" title="Load configuration from file">
+                        <i class="material-icons">file_upload</i>
+                    </a>
+                    <a class="btn-floating btn-small waves-effect waves-light adapter-config-save" title="Save configuration to file">
+                        <i class="material-icons">file_download</i>
                     </a>
                 </div>
-            </div>                        
+            </div>
             
             <!--
                 Main settings container
             -->
-            <div class="settings" style="flex: 1 1 auto; overflow: auto;">        
+            <div class="settings" style="flex: 1 1 auto; overflow: auto;">
                 <div class="row" style="height: 100%; margin-bottom: 0px; display: flex;">
 
                     <!-- 
@@ -541,7 +559,7 @@
                         <div>
                             <a class="btn-floating waves-effect waves-light blue table-button-add" id="addListItem"><i class="material-icons">add</i></a>
                         </div>
-                        <div id="smartstatesListContainer" style="display: flex; flex: 1; overflow-x: auto;">                            
+                        <div id="smartstatesListContainer" style="display: flex; flex: 1; overflow-x: auto;">
                             <gui-simplelist id="smartstatelist" name="Smart States" style="width: 100%;">
                                 <div style="padding-left: 10px;">
                                     <div style="min-height: 1em; font-weight: bold; margin-bottom: 7px;">${item.name}</div>
@@ -555,7 +573,7 @@
                     <!-- 
                         A vertical spacer for a little better user experience
                     -->
-                    <div class="area spacer">                        
+                    <div class="area spacer">
                     </div>
 
                     <!-- 
@@ -601,7 +619,7 @@
                                                 <th data-name="_index" style="width: 40px" class="translate"></th>                                
                                                 <th data-name="type"  style="min-width: 100px" data-type="select" data-options="STATE;PATTERN" class="translate type">Type</th>                                    
                                                 <th data-name="idOrPattern" class="translate" style="min-width: 420px">Id/Pattern</th>                                                                                
-                                                <!--<th data-name="function" data-type="string" class="translate channel">Function</th>-->
+                                                <th data-name="function" data-type="text" class="translate" style="min-width: 320px">Value function</th>
                                                 <th data-buttons="delete up down" style="width: 120px"></th>
                                             </tr>
                                         </thead>
@@ -617,6 +635,7 @@
        
             <!-- this div is used for the state selection popup dialog -->
             <div id="dialog-select-member" style="display:none"></div>
+
 
         </div>
     </div>
