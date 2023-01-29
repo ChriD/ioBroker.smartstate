@@ -68,7 +68,7 @@ Those smart states settings will create following states in the object tree
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.0.2 (2023-01-29)
 
 -   (ChriD) added ability to define a 'value function' which can be used to change the value for the state before the operator is applied
 
