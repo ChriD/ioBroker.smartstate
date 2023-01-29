@@ -35,7 +35,7 @@ Then you can add following parameters.
     |-------------|-------------|
     | `Type` | the `state` type will allow a selection of one state<br>the `pattern` type will allow a state selection pattern |
     | `Id/Pattern` | the state id or the pattern |
-    | `Value function` | a valid javacsript code to change the value for the state before the operator/calculation type is applied eg: `return !value` |
+    | `Value function` | a valid javacsript code to change the value for the state before the operator/calculation type is applied eg: `return !value`<br>The `value` var holds the state value |
 
 ## Important  
 
