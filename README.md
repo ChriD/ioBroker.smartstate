@@ -56,7 +56,7 @@ This one shows the use of a pattern to determine if any dmx light is on
 ![image](https://user-images.githubusercontent.com/2505067/214383174-d4d23091-d2fb-4a86-a294-998a0af54dc9.png)
 
 And here we use a function to count all lights (in this case kitchen) which are off
-
+![image](https://user-images.githubusercontent.com/2505067/215353732-b209acb6-13d1-4e92-8158-9d4e8692d5bd.png)
 
 Those smart states settings will create following states in the object tree
 ![image](https://user-images.githubusercontent.com/2505067/214383091-577a1dc9-10a5-4478-af3f-a8374a5a8487.png)
