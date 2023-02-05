@@ -4,6 +4,8 @@
     <!--
         TODO:
             * implement user functions
+            * disable state value item template on none
+            * validate state value item template function 
     -->
 
     <!-- Load ioBroker scripts and styles-->
@@ -61,6 +63,13 @@
             STATE: 'STATE',
             PATTERN: 'PATTERN'
         };
+
+        const STATEINFOTYPE = {
+            NONE : 'No Info',
+            JSONARRAY: 'JSON array',
+            JSONOBJECT: 'JSON object',
+            STRING: 'Id string'      
+        };
         
         // the 'onChangeCallback' is a reference to the '_onChange' var given in the 'load' function
         // we do store it globally here because it's way easier to handle the activation of the 'Save'
@@ -85,12 +94,23 @@
             // setup the selection box for the calculation type of the smartstate by using the constant
             // variable defined at the beginning of the script
             const selectCalcTypeElement = document.getElementById('calctype');
-            for (const [key, value] of Object.entries(STATECALCTYPE))                
+            for (const [key, value] of Object.entries(STATECALCTYPE))
             {
                 let option = document.createElement("option");
                 option.value = value;
                 option.text = value;
                 selectCalcTypeElement.add(option, null);
+            }
+
+            // setup the selection box for creating a state info datapoint where state infos for the given
+            // calc types are gathered            
+            const selectStateInfoTypeElement = document.getElementById('stateInfoType');
+            for (const [key, value] of Object.entries(STATEINFOTYPE))
+            {
+                let option = document.createElement("option");
+                option.value = value;
+                option.text = value;
+                selectStateInfoTypeElement.add(option, null);
             }
             
             // we use a custom element (create with lit.dev) as a list which we will populate with the 
@@ -142,6 +162,8 @@
             $('#path').on('change', () => { onChangeCallback(); settingsChangedByUser() });
             $('#calctype').on('change', () => { onChangeCallback(); settingsChangedByUser() });
             $('#calcOnlyForACK').on('change', () => { onChangeCallback(); settingsChangedByUser() });
+            $('#stateInfoType').on('change', () => { onChangeCallback(); settingsChangedByUser(); stateInfoTypeChanged() });
+            $('#stateInfoTypeFunction').on('change', () => { onChangeCallback(); settingsChangedByUser() });
 
             // we attach a 'leavingItem' callback to add some item validation
             const smartstateListElement = document.querySelector('#smartstatelist');
@@ -229,7 +251,9 @@
                         id: smartstate.id,
                         calctype: smartstate.calctype,
                         path: smartstate.path,
-                        calcOnlyForACK : smartstate.calcOnlyForACK
+                        calcOnlyForACK : smartstate.calcOnlyForACK,
+                        stateInfoType : smartstate.stateInfoType,
+                        stateInfoTypeFunction : smartstate.stateInfoTypeFunction
                     });
                 }
             }
@@ -245,9 +269,14 @@
             smartstateListElement.addEventListener('itemAdded', (_event)=> {
                 updateIdFromName(_event.detail.item.name);
                 // the calculation type has to be pre init to a standard value on new items
-                settingsIdElement = document.querySelector('#calctype');
+                calctypeElement = document.querySelector('#calctype');
                 if(_event.detail.userInteraction)
-                    $(settingsIdElement).val(STATECALCTYPE.OR).select();
+                    $(calctypeElement).val(STATECALCTYPE.OR).select();
+
+                // the state info type has to be pre init to a standard value on new items
+                stateinfotypeElement = document.querySelector('#stateinfotype');
+                if(_event.detail.userInteraction)
+                    $(stateinfotypeElement).val(STATEINFOTYPE.NONE).select();
 
                 // automatically set the cursor to the name on new items because the user
                 // definitly wan'ts to set the name for a state
@@ -343,6 +372,8 @@
                 settings.smartstate[smartStateObjectId].function = smartStateData.function;
                 settings.smartstate[smartStateObjectId].objectId = smartStateObjectId;
                 settings.smartstate[smartStateObjectId].calcOnlyForACK = smartStateData.calcOnlyForACK;
+                settings.smartstate[smartStateObjectId].stateInfoType = smartStateData.stateInfoType;
+                settings.smartstate[smartStateObjectId].stateInfoTypeFunction = smartStateData.stateInfoTypeFunction;
 
                 // get the child settings from the temporary childs settings object
                 // be sure to make a copy of the object (we use the easy way for that because we can be sure we only have valid json)
@@ -426,6 +457,34 @@
             const smartstateListElement = document.querySelector('#smartstatelist')
             GUI2SmartStateValues(smartstateListElement.currentSelectedIdx);       
             smartstateListElement.requestUpdate();     
+        }
+
+
+        // when the state info type was changed by the user we auto init some values in the 'stateInfoTypeFunction'
+        // element. Those vaöues are some default values
+        function stateInfoTypeChanged()
+        {
+            const stateInfoTypeValue = $(document.getElementById("stateInfoType")).val();
+            switch(stateInfoTypeValue)
+            {  
+                case STATEINFOTYPE.NONE:
+                    itemTemplateFunction = '';
+                    break;
+                case STATEINFOTYPE.JSONARRAY:
+                    itemTemplateFunction = 'state.id';
+                    break;
+                case STATEINFOTYPE.JSONOBJECT:
+                    itemTemplateFunction = 'state';
+                    break;
+                case STATEINFOTYPE.STRING:
+                    itemTemplateFunction = 'state.id';
+                    break;
+                default:
+                    itemTemplateFunction = '';
+            }
+
+            $(document.getElementById("stateInfoTypeFunction")).val(itemTemplateFunction);
+            if (M) M.updateTextFields();           
         }
 
         
@@ -603,6 +662,18 @@
                                 <input id="path" type="text" class="value" />
                                 <label class="translate" for="path">Pfad:</label>
                             </div>
+                        </div>
+                        <div class="row">
+                            <div class="input-field col s3 m2 l1">
+                                <select id="stateInfoType" class="value"></select>
+                                <label class="translate" for="calctype">State info type:</label>
+                            </div>
+                            <div class="input-field col s8 m6 l3">
+                                <input id="stateInfoTypeFunction" type="text" class="value" />
+                                <label class="translate" for="path">State info type function:</label>
+                            </div>
+                        </div>
+                        <div class="row">
                             <div class="input-field col s8 m6 l3">
                                 <input id="calcOnlyForACK" type="checkbox" class="value" />
                                 <label class="translate" for="calcOnlyForACK">Calc only for ACK values</label>
