@@ -496,8 +496,7 @@ class Smartstate extends utils.Adapter {
                     let deviceProbeId = stateInfoStates[idx].id;
                     do
                     {
-                        deviceProbeId = deviceProbeId.substr(0, deviceProbeId.lastIndexOf('.') - 1);
-                        this.log.error(deviceProbeId);
+                        deviceProbeId = deviceProbeId.substr(0, deviceProbeId.lastIndexOf('.'));
                         deviceObjectInfo = await this.getForeignObjectAsync(deviceProbeId);
                         if(deviceObjectInfo && deviceObjectInfo.type == 'device')
                             break;
