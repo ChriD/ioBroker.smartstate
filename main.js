@@ -131,7 +131,7 @@ class Smartstate extends utils.Adapter {
 
     getStateInfoObjectId(_smartstateId)
     {
-        return `${_smartstateId}_`;
+        return `${_smartstateId}_StateInfo`;
     }
 
 
@@ -485,18 +485,24 @@ class Smartstate extends utils.Adapter {
 
                 for (let idx=0; idx<stateInfoStates.length; idx++)
                 {
-                    this.log.error(JSON.stringify(stateInfoStates[idx]));
+                    // TODO: get object data for the state
+                    const objectInfo = await this.getObjectAsync(stateInfoStates[idx].id);
+
+                    this.log.error(JSON.stringify(objectInfo));
+
+                    const functionParams = { id : stateInfoStates[idx].id, state : stateInfoStates[idx], object: objectInfo };
+
                     switch(smartState.stateInfoType)
                     {
                         case STATEINFOTYPE.JSONARRAY:
-                            stateInfoValue[idx] = this.evaluateFunction(smartState.stateInfoFunction, { id : stateInfoStates[idx].id, state : stateInfoStates[idx] });
+                            stateInfoValue[idx] = this.evaluateFunction(smartState.stateInfoFunction, functionParams);
                             break;
                         case STATEINFOTYPE.JSONOBJECT:
-                            stateInfoValue[stateInfoStates[idx].id] = this.evaluateFunction(smartState.stateInfoFunction, { id : stateInfoStates[idx].id, state : stateInfoStates[idx] });
+                            stateInfoValue[stateInfoStates[idx].id] = this.evaluateFunction(smartState.stateInfoFunction, functionParams);
                             break;
                         default:
                             stateInfoValue += stateInfoValue ? ';' : '';
-                            stateInfoValue += this.evaluateFunction(smartState.stateInfoFunction, { id : stateInfoStates[idx].id, state : stateInfoStates[idx] });
+                            stateInfoValue += this.evaluateFunction(smartState.stateInfoFunction, functionParams);
                     }
                 }
 
