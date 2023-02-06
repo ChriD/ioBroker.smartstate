@@ -486,7 +486,7 @@ class Smartstate extends utils.Adapter {
                 for (let idx=0; idx<stateInfoStates.length; idx++)
                 {
                     // TODO: get object data for the state
-                    const objectInfo = await this.getObjectAsync(stateInfoStates[idx].id);
+                    const objectInfo = await this.getForeignObjectAsync(stateInfoStates[idx].id);
 
                     this.log.error(stateInfoStates[idx].id);
                     this.log.error(objectInfo);
