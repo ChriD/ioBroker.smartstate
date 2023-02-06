@@ -100,19 +100,14 @@ class Smartstate extends utils.Adapter {
                     await this.addChildSubscriptionToForeignState(key, childObject);
                 }
 
-                // remove the state info object if not activated anymore
-                if(smartstate.stateInfoType == STATEINFOTYPE.NONE)
-                {
-                    await this.delStateAsync(this.getStateInfoObjectId(fullStateObjectId));
-                    await this.delObjectAsync(this.getStateInfoObjectId(fullStateObjectId), {recursive: true});
-                }
-
                 // create (re)calculate the given smartstate value and set it
                 // the method will create the state if it's not already there
                 await this.recalculateSmartState(key);
 
                 // store full object/stateIds for the created states for cleanup process
                 smartStatesCreatedOrUpdated.push(fullStateObjectId);
+                if(smartstate.stateInfoType != STATEINFOTYPE.NONE)
+                    smartStatesCreatedOrUpdated.push(this.getStateInfoObjectId(fullStateObjectId));
             }
 
             // remove smart states which are not mentioned in the configuration
@@ -127,10 +122,6 @@ class Smartstate extends utils.Adapter {
                     this.log.debug(`Deleting smart state with id ${state._id}`);
                     await this.delStateAsync(state._id);
                     await this.delObjectAsync(state._id, {recursive: true});
-                    // we have to delete the stateinfo datapoint too. This datapoint may not exist on all smartstates
-                    // but its safe to call a delete without having the state event created
-                    await this.delStateAsync(this.getStateInfoObjectId(state._id));
-                    await this.delObjectAsync(this.getStateInfoObjectId(state._id), {recursive: true});
                 }
             }
 
