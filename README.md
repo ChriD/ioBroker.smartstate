@@ -70,7 +70,8 @@ Those smart states settings will create following states in the object tree
 -->
 ### **WORK IN PROGRESS**
 
--   (ChriD) added option to create a datapoint/state which will show some combined state information values from the states which are used by the smart state
+-   (ChriD) #3 - added option to create a datapoint/state which will show some combined state information values from the states which are used by the smart state
+-   (ChriD) #1 - fixed multilayer path creation
 
 ### 0.0.2 (2023-01-29)
 

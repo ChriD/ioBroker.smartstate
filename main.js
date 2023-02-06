@@ -19,6 +19,13 @@ const STATECHILDTYPE = {
     PATTERN: 'PATTERN'
 };
 
+const STATEINFOTYPE = {
+    NONE : 'No info',
+    JSONARRAY: 'JSON array',
+    JSONOBJECT: 'JSON object',
+    STRING: 'Id string'
+};
+
 class Smartstate extends utils.Adapter {
 
     /**
@@ -70,14 +77,20 @@ class Smartstate extends utils.Adapter {
             // build subscriptions from the configuration
             for (const [key, smartstate] of Object.entries(this.config.smartstate))
             {
+                const fullStateObjectId = this.namespace + '.' + (smartstate.path ? smartstate.path + '.' : '') + smartstate.id;
+
                 // add state if not there
                 this.log.debug(`Create state ${key}: ${JSON.stringify(smartstate)}`);
 
                 // build the tree for the state if necessary
-                if(smartstate.path){
+                if(smartstate.path)
+                {
+                    let prefix = '';
                     const pathArray = smartstate.path.split('.');
-                    for (let pathIdx = 0; pathIdx < pathArray.length; pathIdx++){
-                        await this.createObjectNotExists(pathArray[pathIdx], pathArray[pathIdx], 'channel');
+                    for (let pathIdx = 0; pathIdx < pathArray.length; pathIdx++)
+                    {
+                        await this.createObjectNotExists(prefix + pathArray[pathIdx], pathArray[pathIdx], 'channel');
+                        prefix = pathArray[pathIdx] + '.';
                     }
                 }
 
@@ -87,12 +100,19 @@ class Smartstate extends utils.Adapter {
                     await this.addChildSubscriptionToForeignState(key, childObject);
                 }
 
+                // remove the state info object if not activated anymore
+                if(smartstate.stateInfoType == STATEINFOTYPE.NONE)
+                {
+                    await this.delStateAsync(this.getStateInfoObjectId(fullStateObjectId));
+                    await this.delObjectAsync(this.getStateInfoObjectId(fullStateObjectId), {recursive: true});
+                }
+
                 // create (re)calculate the given smartstate value and set it
                 // the method will create the state if it's not already there
                 await this.recalculateSmartState(key);
 
                 // store full object/stateIds for the created states for cleanup process
-                smartStatesCreatedOrUpdated.push(this.namespace + '.' + (smartstate.path ? smartstate.path + '.' : '') + smartstate.id);
+                smartStatesCreatedOrUpdated.push(fullStateObjectId);
             }
 
             // remove smart states which are not mentioned in the configuration
@@ -107,11 +127,20 @@ class Smartstate extends utils.Adapter {
                     this.log.debug(`Deleting smart state with id ${state._id}`);
                     await this.delStateAsync(state._id);
                     await this.delObjectAsync(state._id, {recursive: true});
+                    // we have to delete the stateinfo datapoint too. This datapoint may not exist on all smartstates
+                    // but its safe to call a delete without having the state event created
+                    await this.delStateAsync(this.getStateInfoObjectId(state._id));
+                    await this.delObjectAsync(this.getStateInfoObjectId(state._id), {recursive: true});
                 }
             }
 
             this.calculateStatesInStack();
         }
+    }
+
+    getStateInfoObjectId(_smartstateId)
+    {
+        return `${_smartstateId}_`;
     }
 
 

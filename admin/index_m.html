@@ -65,10 +65,10 @@
         };
 
         const STATEINFOTYPE = {
-            NONE : 'No Info',
+            NONE : 'No info',
             JSONARRAY: 'JSON array',
             JSONOBJECT: 'JSON object',
-            STRING: 'Id string'      
+            STRING: 'Id string'
         };
         
         // the 'onChangeCallback' is a reference to the '_onChange' var given in the 'load' function
@@ -471,13 +471,13 @@
                     itemTemplateFunction = '';
                     break;
                 case STATEINFOTYPE.JSONARRAY:
-                    itemTemplateFunction = 'state.id';
+                    itemTemplateFunction = 'params.state.id';
                     break;
                 case STATEINFOTYPE.JSONOBJECT:
-                    itemTemplateFunction = 'state';
+                    itemTemplateFunction = 'params.state';
                     break;
                 case STATEINFOTYPE.STRING:
-                    itemTemplateFunction = 'state.id';
+                    itemTemplateFunction = 'params.state.id';
                     break;
                 default:
                     itemTemplateFunction = '';
