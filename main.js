@@ -481,6 +481,7 @@ class Smartstate extends utils.Adapter {
 
                 for (let idx=0; idx<stateInfoStates.length; idx++)
                 {
+                    this.log.error(JSON.stringify(stateInfoStates[idx]));
                     switch(smartState.stateInfoType)
                     {
                         case STATEINFOTYPE.JSONARRAY:
