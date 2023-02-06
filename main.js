@@ -484,14 +484,14 @@ class Smartstate extends utils.Adapter {
                     switch(smartState.stateInfoType)
                     {
                         case STATEINFOTYPE.JSONARRAY:
-                            stateInfoValue[idx] = stateInfoStates[idx];
+                            stateInfoValue[idx] = JSON.stringify(stateInfoStates[idx]);
                             break;
                         case STATEINFOTYPE.JSONOBJECT:
-                            stateInfoValue[stateInfoStates[idx]._id] = stateInfoStates[idx];
+                            stateInfoValue[stateInfoStates[idx]._id] = JSON.stringify(stateInfoStates[idx]);
                             break;
                         default:
                             stateInfoValue += stateInfoValue ? ';' : '';
-                            stateInfoValue +=  stateInfoStates[idx];
+                            stateInfoValue += stateInfoStates[idx].val;
                     }
                 }
 
