@@ -68,7 +68,7 @@
             NONE : 'No info',
             JSONARRAY: 'JSON array',
             JSONOBJECT: 'JSON object',
-            STRING: 'Id string'
+            STRING: 'String'
         };
         
         // the 'onChangeCallback' is a reference to the '_onChange' var given in the 'load' function
@@ -163,7 +163,7 @@
             $('#calctype').on('change', () => { onChangeCallback(); settingsChangedByUser() });
             $('#calcOnlyForACK').on('change', () => { onChangeCallback(); settingsChangedByUser() });
             $('#stateInfoType').on('change', () => { onChangeCallback(); settingsChangedByUser(); stateInfoTypeChanged() });
-            $('#stateInfoTypeFunction').on('change', () => { onChangeCallback(); settingsChangedByUser() });
+            $('#stateInfoFunction').on('change', () => { onChangeCallback(); settingsChangedByUser() });
 
             // we attach a 'leavingItem' callback to add some item validation
             const smartstateListElement = document.querySelector('#smartstatelist');
@@ -253,7 +253,7 @@
                         path: smartstate.path,
                         calcOnlyForACK : smartstate.calcOnlyForACK,
                         stateInfoType : smartstate.stateInfoType,
-                        stateInfoTypeFunction : smartstate.stateInfoTypeFunction
+                        stateInfoFunction : smartstate.stateInfoFunction
                     });
                 }
             }
@@ -373,7 +373,7 @@
                 settings.smartstate[smartStateObjectId].objectId = smartStateObjectId;
                 settings.smartstate[smartStateObjectId].calcOnlyForACK = smartStateData.calcOnlyForACK;
                 settings.smartstate[smartStateObjectId].stateInfoType = smartStateData.stateInfoType;
-                settings.smartstate[smartStateObjectId].stateInfoTypeFunction = smartStateData.stateInfoTypeFunction;
+                settings.smartstate[smartStateObjectId].stateInfoFunction = smartStateData.stateInfoFunction;
 
                 // get the child settings from the temporary childs settings object
                 // be sure to make a copy of the object (we use the easy way for that because we can be sure we only have valid json)
@@ -460,7 +460,7 @@
         }
 
 
-        // when the state info type was changed by the user we auto init some values in the 'stateInfoTypeFunction'
+        // when the state info type was changed by the user we auto init some values in the 'stateInfoFunction'
         // element. Those vaöues are some default values
         function stateInfoTypeChanged()
         {
@@ -471,19 +471,19 @@
                     itemTemplateFunction = '';
                     break;
                 case STATEINFOTYPE.JSONARRAY:
-                    itemTemplateFunction = 'params.state.id';
+                    itemTemplateFunction = 'return params.state.id';
                     break;
                 case STATEINFOTYPE.JSONOBJECT:
-                    itemTemplateFunction = 'params.state';
+                    itemTemplateFunction = 'return params.state';
                     break;
                 case STATEINFOTYPE.STRING:
-                    itemTemplateFunction = 'params.state.id';
+                    itemTemplateFunction = 'return params.state.id';
                     break;
                 default:
                     itemTemplateFunction = '';
             }
 
-            $(document.getElementById("stateInfoTypeFunction")).val(itemTemplateFunction);
+            $(document.getElementById("stateInfoFunction")).val(itemTemplateFunction);
             if (M) M.updateTextFields();           
         }
 
@@ -669,7 +669,7 @@
                                 <label class="translate" for="calctype">State info type:</label>
                             </div>
                             <div class="input-field col s8 m6 l3">
-                                <input id="stateInfoTypeFunction" type="text" class="value" />
+                                <input id="stateInfoFunction" type="text" class="value" />
                                 <label class="translate" for="path">State info type function:</label>
                             </div>
                         </div>

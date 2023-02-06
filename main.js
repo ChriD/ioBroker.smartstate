@@ -23,7 +23,7 @@ const STATEINFOTYPE = {
     NONE : 'No info',
     JSONARRAY: 'JSON array',
     JSONOBJECT: 'JSON object',
-    STRING: 'Id string'
+    STRING: 'String'
 };
 
 class Smartstate extends utils.Adapter {
@@ -484,18 +484,19 @@ class Smartstate extends utils.Adapter {
                     switch(smartState.stateInfoType)
                     {
                         case STATEINFOTYPE.JSONARRAY:
-                            stateInfoValue[idx] = JSON.stringify(stateInfoStates[idx]);
+                            stateInfoValue[idx] = this.evaluateFunction(smartState.stateInfoFunction, { state : stateInfoStates[idx] });
                             break;
                         case STATEINFOTYPE.JSONOBJECT:
-                            stateInfoValue[stateInfoStates[idx]._id] = JSON.stringify(stateInfoStates[idx]);
+                            stateInfoValue[stateInfoStates[idx]._id] = this.evaluateFunction(smartState.stateInfoFunction, { state : stateInfoStates[idx] });
                             break;
                         default:
                             stateInfoValue += stateInfoValue ? ';' : '';
-                            stateInfoValue += stateInfoStates[idx].val;
+                            stateInfoValue += this.evaluateFunction(smartState.stateInfoFunction, { state : stateInfoStates[idx] });
                     }
                 }
 
-                await this.createOrUpdateState(this.getStateInfoObjectId(this.getSmartstateIdWithPath(smartState)), 'State info', stateInfoObjectDatatype, 'state', stateInfoValue);
+                const stateInfoValueConverted = smartState.stateInfoType == STATEINFOTYPE.STRING ? stateInfoValue.toString() : JSON.stringify(stateInfoValue);
+                await this.createOrUpdateState(this.getStateInfoObjectId(this.getSmartstateIdWithPath(smartState)), 'State info', stateInfoObjectDatatype, 'state', stateInfoValueConverted);
             }
         }
         catch(_error)
