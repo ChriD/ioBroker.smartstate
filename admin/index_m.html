@@ -471,13 +471,13 @@
                     itemTemplateFunction = '';
                     break;
                 case STATEINFOTYPE.JSONARRAY:
-                    itemTemplateFunction = 'return params.state.id';
+                    itemTemplateFunction = 'return params.id';
                     break;
                 case STATEINFOTYPE.JSONOBJECT:
                     itemTemplateFunction = 'return params.state';
                     break;
                 case STATEINFOTYPE.STRING:
-                    itemTemplateFunction = 'return params.state.id';
+                    itemTemplateFunction = 'return params.id';
                     break;
                 default:
                     itemTemplateFunction = '';

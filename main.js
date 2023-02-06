@@ -388,6 +388,10 @@ class Smartstate extends utils.Adapter {
                     // store the first value for further calculations
                     firstValue = childIdx === 0 ? value : firstValue;
 
+                    // we do need the id of the state within the state object itself for further processing
+                    // this is only temporary and will be used for special purposes 
+                    state.id = stateIds[stateIdx];
+
                     // for each calculation type we have to do another calculation using the child values
                     // see the different cases for further info. Its really a very easy approach but it will be sufficient for many cases
                     switch(smartState.calctype)
@@ -485,14 +489,14 @@ class Smartstate extends utils.Adapter {
                     switch(smartState.stateInfoType)
                     {
                         case STATEINFOTYPE.JSONARRAY:
-                            stateInfoValue[idx] = this.evaluateFunction(smartState.stateInfoFunction, { state : stateInfoStates[idx] });
+                            stateInfoValue[idx] = this.evaluateFunction(smartState.stateInfoFunction, { id : stateInfoStates[idx].id, state : stateInfoStates[idx] });
                             break;
                         case STATEINFOTYPE.JSONOBJECT:
-                            stateInfoValue[stateInfoStates[idx]._id] = this.evaluateFunction(smartState.stateInfoFunction, { state : stateInfoStates[idx] });
+                            stateInfoValue[stateInfoStates[idx].id] = this.evaluateFunction(smartState.stateInfoFunction, { id : stateInfoStates[idx].id, state : stateInfoStates[idx] });
                             break;
                         default:
                             stateInfoValue += stateInfoValue ? ';' : '';
-                            stateInfoValue += this.evaluateFunction(smartState.stateInfoFunction, { state : stateInfoStates[idx] });
+                            stateInfoValue += this.evaluateFunction(smartState.stateInfoFunction, { id : stateInfoStates[idx].id, state : stateInfoStates[idx] });
                     }
                 }
 
