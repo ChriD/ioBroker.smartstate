@@ -503,8 +503,8 @@ class Smartstate extends utils.Adapter {
                     }
                     while(deviceObjectInfo);
 
-                    // TODO: @@@
-                    this.log.error(JSON.stringify(deviceObjectInfo));
+                    if(!deviceObjectInfo)
+                        this.log.debug(`No 'device' parent found for ${stateInfoStates[idx].id}`);
 
                     const functionParams = { id : stateInfoStates[idx].id, state : stateInfoStates[idx], stateObject: stateObjectInfo, deviceObject: deviceObjectInfo};
 
@@ -514,7 +514,7 @@ class Smartstate extends utils.Adapter {
                             stateInfoValue[idx] = this.evaluateFunction(smartState.stateInfoFunction, functionParams);
                             break;
                         case STATEINFOTYPE.JSONOBJECT:
-                            stateInfoValue[stateInfoStates[idx].id] = this.evaluateFunction(smartState.stateInfoFunction, functionParams);
+                            stateInfoValue[deviceObjectInfo ? deviceObjectInfo._id : stateInfoStates[idx].id] = this.evaluateFunction(smartState.stateInfoFunction, functionParams);
                             break;
                         default:
                             stateInfoValue += stateInfoValue ? ';' : '';
