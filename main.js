@@ -64,50 +64,54 @@ class Smartstate extends utils.Adapter {
     {
         const smartStatesCreatedOrUpdated = new Array();
 
-        // build subscriptions from the configuration
-        for (const [key, smartstate] of Object.entries(this.config.smartstate))
+        if(this.config && this.config.smartstate)
         {
-            // add state if not there
-            this.log.debug(`Create state ${key}: ${JSON.stringify(smartstate)}`);
 
-            // build the tree for the state if necessary
-            if(smartstate.path){
-                const pathArray = smartstate.path.split('.');
-                for (let pathIdx = 0; pathIdx < pathArray.length; pathIdx++){
-                    await this.createObjectNotExists(pathArray[pathIdx], pathArray[pathIdx], 'channel');
+            // build subscriptions from the configuration
+            for (const [key, smartstate] of Object.entries(this.config.smartstate))
+            {
+                // add state if not there
+                this.log.debug(`Create state ${key}: ${JSON.stringify(smartstate)}`);
+
+                // build the tree for the state if necessary
+                if(smartstate.path){
+                    const pathArray = smartstate.path.split('.');
+                    for (let pathIdx = 0; pathIdx < pathArray.length; pathIdx++){
+                        await this.createObjectNotExists(pathArray[pathIdx], pathArray[pathIdx], 'channel');
+                    }
+                }
+
+                for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
+                {
+                    const childObject = smartstate.childs[childIdx];
+                    await this.addChildSubscriptionToForeignState(key, childObject);
+                }
+
+                // create (re)calculate the given smartstate value and set it
+                // the method will create the state if it's not already there
+                await this.recalculateSmartState(key);
+
+                // store full object/stateIds for the created states for cleanup process
+                smartStatesCreatedOrUpdated.push(this.namespace + '.' + (smartstate.path ? smartstate.path + '.' : '') + smartstate.id);
+            }
+
+            // remove smart states which are not mentioned in the configuration
+            const states = await this.getStatesOfAsync();
+            this.log.debug(`Created smart states: ${JSON.stringify(smartStatesCreatedOrUpdated)}`);
+            for (const state of states)
+            {
+                // check if the state is defined in the configuration. The smartstate id has to be unique within the
+                // smartstate adapter instance
+                if(smartStatesCreatedOrUpdated.includes(state._id) == false)
+                {
+                    this.log.debug(`Deleting smart state with id ${state._id}`);
+                    await this.delStateAsync(state._id);
+                    await this.delObjectAsync(state._id, {recursive: true});
                 }
             }
 
-            for (let childIdx = 0; childIdx < smartstate.childs.length; childIdx++)
-            {
-                const childObject = smartstate.childs[childIdx];
-                await this.addChildSubscriptionToForeignState(key, childObject);
-            }
-
-            // create (re)calculate the given smartstate value and set it
-            // the method will create the state if it's not already there
-            await this.recalculateSmartState(key);
-
-            // store full object/stateIds for the created states for cleanup process
-            smartStatesCreatedOrUpdated.push(this.namespace + '.' + (smartstate.path ? smartstate.path + '.' : '') + smartstate.id);
+            this.calculateStatesInStack();
         }
-
-        // remove smart states which are not mentioned in the configuration
-        const states = await this.getStatesOfAsync();
-        this.log.debug(`Created smart states: ${JSON.stringify(smartStatesCreatedOrUpdated)}`);
-        for (const state of states)
-        {
-            // check if the state is defined in the configuration. The smartstate id has to be unique within the
-            // smartstate adapter instance
-            if(smartStatesCreatedOrUpdated.includes(state._id) == false)
-            {
-                this.log.debug(`Deleting smart state with id ${state._id}`);
-                await this.delStateAsync(state._id);
-                await this.delObjectAsync(state._id, {recursive: true});
-            }
-        }
-
-        this.calculateStatesInStack();
     }
 
 
