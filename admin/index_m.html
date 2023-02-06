@@ -471,13 +471,13 @@
                     itemTemplateFunction = '';
                     break;
                 case STATEINFOTYPE.JSONARRAY:
-                    itemTemplateFunction = 'return params.id';
+                    itemTemplateFunction = 'return params.deviceObject._id';
                     break;
                 case STATEINFOTYPE.JSONOBJECT:
-                    itemTemplateFunction = 'return params.state';
+                    itemTemplateFunction = 'return params.deviceObject';
                     break;
                 case STATEINFOTYPE.STRING:
-                    itemTemplateFunction = 'return params.id';
+                    itemTemplateFunction = 'return params.deviceObject._id';
                     break;
                 default:
                     itemTemplateFunction = '';

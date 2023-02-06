@@ -464,7 +464,8 @@ class Smartstate extends utils.Adapter {
 
             await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, stateDatatype, 'state', smartValue);
 
-            //
+            // TODO: @@@
+            // following code may be performance intense?
             if(smartState.stateInfoType != STATEINFOTYPE.NONE)
             {
                 let stateInfoObjectDatatype;
@@ -485,14 +486,27 @@ class Smartstate extends utils.Adapter {
 
                 for (let idx=0; idx<stateInfoStates.length; idx++)
                 {
-                    // TODO: get object data for the state
-                    const objectInfo = await this.getForeignObjectAsync(stateInfoStates[idx].id);
+                    // get the object data for the state so we cann pass it to the user function
+                    // furthermore we "traverse" the object tree and try to find the parent device for the state
+                    // because this is the object most users want to have
+                    const stateObjectInfo = await this.getForeignObjectAsync(stateInfoStates[idx].id);
 
-                    this.log.error(stateInfoStates[idx].id);
-                    this.log.error(objectInfo);
-                    this.log.error(JSON.stringify(objectInfo));
+                    // traverse backwards to device node, when found we read the object for the device node and
+                    let deviceObjectInfo;
+                    let deviceProbeId = stateInfoStates[idx].id;
+                    do
+                    {
+                        deviceProbeId = deviceProbeId.substr(0, deviceProbeId.lastIndexOf('.') - 1);
+                        deviceObjectInfo = await this.getForeignObjectAsync(deviceProbeId);
+                        if(deviceObjectInfo && deviceObjectInfo.type == 'device')
+                            break;
+                    }
+                    while(deviceObjectInfo);
 
-                    const functionParams = { id : stateInfoStates[idx].id, state : stateInfoStates[idx], object: objectInfo };
+                    // TODO: @@@
+                    this.log.error(JSON.stringify(deviceObjectInfo));
+
+                    const functionParams = { id : stateInfoStates[idx].id, state : stateInfoStates[idx], stateObject: stateObjectInfo, deviceObject: deviceObjectInfo};
 
                     switch(smartState.stateInfoType)
                     {
