@@ -317,9 +317,11 @@ class Smartstate extends utils.Adapter {
         {
             let smartValue;
             let curMinValue, curMaxValue, firstValue;
+            let stateInfoValue;
+            let stateInfoStates = new Array();
             let stateDatatype;
 
-            // initialize the smart value fromn its csalculation type
+            // initialize the smart value from it's csalculation type
             switch(smartState.calctype)
             {
                 case STATECALCTYPE.COUNT:
@@ -401,24 +403,33 @@ class Smartstate extends utils.Adapter {
                     {
                         case STATECALCTYPE.COUNT:
                             smartValue += value ? 1 : 0;
+                            if(value)
+                                stateInfoStates.push(state);
                             break;
 
                         case STATECALCTYPE.SUM:
                         case STATECALCTYPE.AVG:
                             smartValue += value;
+                            stateInfoStates.push(state);
                             break;
 
                         case STATECALCTYPE.OR:
                             smartValue = smartValue || (value ? true : false);
+                            if(value)
+                                stateInfoStates.push(state);
                             break;
 
                         case STATECALCTYPE.AND:
                             smartValue = smartValue && (value ? true : false);
+                            if(value)
+                                stateInfoStates.push(state);
                             break;
 
                         case STATECALCTYPE.EQUALS:
                             if(value != firstValue)
                                 smartValue = false;
+                            else
+                                stateInfoStates.push(state);
                             break;
 
                         case STATECALCTYPE.MIN:
@@ -426,6 +437,7 @@ class Smartstate extends utils.Adapter {
                             {
                                 curMinValue = value;
                                 smartValue = curMinValue;
+                                stateInfoStates[0] = state;
                             }
                             break;
 
@@ -434,6 +446,7 @@ class Smartstate extends utils.Adapter {
                             {
                                 curMaxValue = value;
                                 smartValue = curMaxValue;
+                                stateInfoStates[0] = state;
                             }
                             break;
 
@@ -455,6 +468,44 @@ class Smartstate extends utils.Adapter {
             this.log.debug(`New value was created for smartstate ${_smartStateId}: ${smartValue}`);
 
             await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, stateDatatype, 'state', smartValue);
+
+            //
+            if(smartState.stateInfoType != STATEINFOTYPE.NONE)
+            {
+                let stateInfoObjectDatatype;
+                switch(smartState.stateInfoType)
+                {
+                    case STATEINFOTYPE.JSONARRAY:
+                        stateInfoObjectDatatype = 'json';
+                        stateInfoValue = new Array();
+                        break;
+                    case STATEINFOTYPE.JSONOBJECT:
+                        stateInfoObjectDatatype = 'json';
+                        stateInfoValue = new Object();
+                        break;
+                    default:
+                        stateInfoObjectDatatype = 'string';
+                        stateInfoValue = '';
+                }
+
+                for (let idx=0; idx<stateInfoStates.length; idx++)
+                {
+                    switch(smartState.stateInfoType)
+                    {
+                        case STATEINFOTYPE.JSONARRAY:
+                            stateInfoValue[idx] = stateInfoStates[idx];
+                            break;
+                        case STATEINFOTYPE.JSONOBJECT:
+                            stateInfoValue[stateInfoStates[idx]._id] = stateInfoStates[idx];
+                            break;
+                        default:
+                            stateInfoValue += stateInfoValue ? ';' : '';
+                            stateInfoValue +=  stateInfoStates[idx];
+                    }
+                }
+
+                await this.createOrUpdateState(this.getStateInfoObjectId(this.getSmartstateIdWithPath(smartState)), 'State info', stateInfoObjectDatatype, 'state', stateInfoValue);
+            }
         }
         catch(_error)
         {
