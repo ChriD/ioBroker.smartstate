@@ -514,7 +514,7 @@ class Smartstate extends utils.Adapter {
 
                     // the state info has the ability to build its value from a function which the user can define
                     // for this function we are creating the parameters here.
-                    const functionParams = { id : stateInfoStates[idx].id, state : stateInfoStates[idx], stateObject: stateObjectInfo, deviceObject: deviceObjectInfo};
+                    const functionParams = { id : stateInfoStates[idx].id, state: stateInfoStates[idx], stateObject: stateObjectInfo, deviceObject: deviceObjectInfo};
 
                     switch(smartState.stateInfoType)
                     {
@@ -565,4 +565,4 @@ if (require.main !== module) {
     module.exports = (options) => new Smartstate(options);
 } else {
     new Smartstate();
-}
+}id
