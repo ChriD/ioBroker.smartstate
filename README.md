@@ -97,6 +97,9 @@ So for having the name inserted instead the id you can change te default functio
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+-   (ChriD) Hotfix adapter crash on startup
+
 ### 0.0.3 (2023-02-07)
 
 -   (ChriD) added option to create a datapoint/state which will show some combined state information values from the states which are used by the smart state
