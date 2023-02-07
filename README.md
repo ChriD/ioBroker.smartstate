@@ -79,11 +79,11 @@ The 'State Info Type' will set if, and how the values are beeing presented
 The value which is beeing stored is delivered by the `State info type function` and will be defaulted to the full id of the state, but the user can change this by changing this function. The function has to be a valid javascript code!<br>
 The variable `params` can be used and it has following properties
 
-    | Field | Description |
-    |-------------|-------------|
-    | `id` | The name of the smartstate |
-    | `stateObject` | The object of the state |
-    | `stateObjectInfo` | This is the object of the parent `device` for the state (if there is a device), otherwise its the same as `stateObject` |
+| Field | Description |
+|-------------|-------------|
+| `id` | The name of the smartstate |
+| `stateObject` | The object of the state |
+| `stateObjectInfo` | This is the object of the parent `device` for the state (if there is a device), otherwise its the same as `stateObject` |
   
 The objects (`stateObject`, `stateObjectInfo`) are those you can see in the iobroker object list, e.g.:
 ![image](https://user-images.githubusercontent.com/2505067/217324484-feffe2b6-06f2-47c7-a06a-42b738bb48d5.png)
