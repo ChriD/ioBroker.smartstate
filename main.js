@@ -1,9 +1,10 @@
 'use strict';
 
 const utils = require('@iobroker/adapter-core');
-import { STATECALCTYPE, STATECHILDTYPE, STATEINFOTYPE } from './admin/libs/common/constants.js';
 
-/*
+// following constants have to be exactly the same as in the index_m.html file for the admin settings
+// in future i am trying to create an extra files for constants which are used by node and the web, but
+// for now we keep it redundant
 const STATECALCTYPE = {
     COUNT: 'count',
     SUM: 'sum',
@@ -25,7 +26,7 @@ const STATEINFOTYPE = {
     JSONARRAY: 'JSON array',
     JSONOBJECT: 'JSON object',
     STRING: 'String'
-};*/
+};
 
 class Smartstate extends utils.Adapter {
 
@@ -74,7 +75,6 @@ class Smartstate extends utils.Adapter {
 
         if(this.config && this.config.smartstate)
         {
-
             // build subscriptions from the configuration
             for (const [key, smartstate] of Object.entries(this.config.smartstate))
             {
@@ -105,7 +105,8 @@ class Smartstate extends utils.Adapter {
                 // the method will create the state if it's not already there
                 await this.recalculateSmartState(key);
 
-                // store full object/stateIds for the created states for cleanup process
+                // store full object/stateIds for the created states for cleanup process. If we do have the state info
+                // datapoint activated we have to add this object id too
                 smartStatesCreatedOrUpdated.push(fullStateObjectId);
                 if(smartstate.stateInfoType != STATEINFOTYPE.NONE)
                     smartStatesCreatedOrUpdated.push(this.getStateInfoObjectId(fullStateObjectId));
@@ -130,6 +131,10 @@ class Smartstate extends utils.Adapter {
         }
     }
 
+    /**
+     * Is beeing used to generate the id for the state info datapoint. It will use the smartstateId and add some
+     * fixed ending. There is currently no need for any dynamic approach to this id
+     */
     getStateInfoObjectId(_smartstateId)
     {
         return `${_smartstateId}_StateInfo`;
@@ -231,7 +236,6 @@ class Smartstate extends utils.Adapter {
                         {
                             // update the state cache with the changed state object
                             this.stateCache[id] = state;
-
                             // only add the ids for calculation into a stack buffer, this stack buffer will
                             // be processed and deleted by a timer method
                             this.recalculationStack.push(this.subscriptionSmartstateLink[id].links[linkIdx]);
@@ -293,7 +297,11 @@ class Smartstate extends utils.Adapter {
         await this.setStateAsync(_id, { val: _stateValue, ack: true });
     }
 
-
+    /**
+     * Is beeing called whenever a smartstate has to be recaclulated (because a child state changed)
+     * it will create the smartstate object within the given path and the state info datapoint if activated
+     * @param {string} _smartStateId
+     */
     async recalculateSmartState(_smartStateId)
     {
         this.log.debug(`Recalculating smartstate with id ${_smartStateId}`);
@@ -324,13 +332,11 @@ class Smartstate extends utils.Adapter {
                     smartValue = 0;
                     stateDatatype = 'number';
                     break;
-
                 case STATECALCTYPE.AND:
                 case STATECALCTYPE.EQUALS:
                     smartValue = true;
                     stateDatatype = 'boolean';
                     break;
-
                 case STATECALCTYPE.OR:
                     smartValue = false;
                     stateDatatype = 'boolean';
@@ -402,32 +408,27 @@ class Smartstate extends utils.Adapter {
                             if(value)
                                 stateInfoStates.push(state);
                             break;
-
                         case STATECALCTYPE.SUM:
                         case STATECALCTYPE.AVG:
                             smartValue += value;
                             stateInfoStates.push(state);
                             break;
-
                         case STATECALCTYPE.OR:
                             smartValue = smartValue || (value ? true : false);
                             if(value)
                                 stateInfoStates.push(state);
                             break;
-
                         case STATECALCTYPE.AND:
                             smartValue = smartValue && (value ? true : false);
                             if(value)
                                 stateInfoStates.push(state);
                             break;
-
                         case STATECALCTYPE.EQUALS:
                             if(value != firstValue)
                                 smartValue = false;
                             else
                                 stateInfoStates.push(state);
                             break;
-
                         case STATECALCTYPE.MIN:
                             if(value < curMinValue)
                             {
@@ -436,7 +437,6 @@ class Smartstate extends utils.Adapter {
                                 stateInfoStates[0] = state;
                             }
                             break;
-
                         case STATECALCTYPE.MAX:
                             if(value > curMaxValue)
                             {
@@ -445,7 +445,6 @@ class Smartstate extends utils.Adapter {
                                 stateInfoStates[0] = state;
                             }
                             break;
-
                         default:
                             this.log.error(`Wrong or not implemented calculation type: ${smartState.calctype}`);
                     }
@@ -465,11 +464,15 @@ class Smartstate extends utils.Adapter {
 
             await this.createOrUpdateState(this.getSmartstateIdWithPath(smartState), _smartStateId, stateDatatype, 'state', smartValue);
 
-            // TODO: @@@
-            // following code may be performance intense?
+
+            // Following code does create the state info value if activated. This may decrease the performance of this adapter
+            // There were no excessive performance tests made and i can not guess if it will have huge impact or not
             if(smartState.stateInfoType != STATEINFOTYPE.NONE)
             {
                 let stateInfoObjectDatatype;
+
+                // we have to init some variables by the stateInfoType. Those are the datapoint type for the sateInfo datapoint
+                // and the info value itself which will be converted to a string or JSON output
                 switch(smartState.stateInfoType)
                 {
                     case STATEINFOTYPE.JSONARRAY:
@@ -493,6 +496,8 @@ class Smartstate extends utils.Adapter {
                     const stateObjectInfo = await this.getForeignObjectAsync(stateInfoStates[idx].id);
 
                     // traverse backwards to device node, when found we read the object for the device node and
+                    // this will be our object which will have the most informational meaning. If we did not find
+                    // such and 'device' object, its okay, then the info object will be the state object itself
                     let deviceObjectInfo;
                     let deviceProbeId = stateInfoStates[idx].id;
                     do
@@ -505,8 +510,10 @@ class Smartstate extends utils.Adapter {
                     while(deviceObjectInfo);
 
                     if(!deviceObjectInfo)
-                        this.log.debug(`No 'device' parent found for ${stateInfoStates[idx].id}`);
+                        this.log.debug(`No 'device' parent found for ${stateInfoStates[idx].id}. Using state object for info`);
 
+                    // the state info has the ability to build its value from a function which the user can define
+                    // for this function we are creating the parameters here.
                     const functionParams = { id : stateInfoStates[idx].id, state : stateInfoStates[idx], stateObject: stateObjectInfo, deviceObject: deviceObjectInfo};
 
                     switch(smartState.stateInfoType)

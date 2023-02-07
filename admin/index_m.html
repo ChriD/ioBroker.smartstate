@@ -3,8 +3,7 @@
 
     <!--
         TODO:
-            * implement user functions
-            * disable state value item template on none
+            * implement user functions            
             * validate state value item template function 
     -->
 
@@ -300,7 +299,9 @@
                 if(!_itemData.id)
                     throw Error(`ID is not allowed to be empty on state: ${_itemData.name}`);
                 if(!_itemData.calctype)
-                    throw Error(`Type is not allowed to be empty on state: ${_itemData.id}`);   
+                    throw Error(`Type is not allowed to be empty on state: ${_itemData.id}`);                     
+                if(_itemData.stateInfoType != STATEINFOTYPE.NONE && !_itemData.stateInfoFunction)
+                    throw Error(`Function for StateTypeInfo is not allowed to be empty on state: ${_itemData.id}`);
 
                 // ID's with '.' are not allowed!
                 if(_itemData.id.includes('.'))
@@ -464,26 +465,34 @@
         // element. Those vaöues are some default values
         function stateInfoTypeChanged()
         {
-            const stateInfoTypeValue = $(document.getElementById("stateInfoType")).val();
+            const stateInfoTypeElement = document.getElementById("stateInfoType");
+            const stateInfoFunctionElement = document.getElementById("stateInfoFunction");
+            const stateInfoTypeValue = $(stateInfoTypeElement).val();
+                       
             switch(stateInfoTypeValue)
             {  
                 case STATEINFOTYPE.NONE:
                     itemTemplateFunction = '';
+                    $(stateInfoFunctionElement).prop( "disabled", true );
                     break;
                 case STATEINFOTYPE.JSONARRAY:
                     itemTemplateFunction = 'return params.deviceObject._id';
+                    $(stateInfoFunctionElement).prop( "disabled", false );
                     break;
                 case STATEINFOTYPE.JSONOBJECT:
                     itemTemplateFunction = 'return params.deviceObject';
+                    $(stateInfoFunctionElement).prop( "disabled", false );
                     break;
                 case STATEINFOTYPE.STRING:
                     itemTemplateFunction = 'return params.deviceObject._id';
+                    $(stateInfoFunctionElement).prop( "disabled", false );
                     break;
                 default:
                     itemTemplateFunction = '';
+                    $(stateInfoFunctionElement).prop( "disabled", true );
             }
 
-            $(document.getElementById("stateInfoFunction")).val(itemTemplateFunction);
+            $(sateInfoFunctionElement).val(itemTemplateFunction);
             if (M) M.updateTextFields();           
         }
 
