@@ -99,8 +99,8 @@ So for having the name inserted instead the id you can change te default functio
 -->
 ### **WORK IN PROGRESS**
 
--   (ChriD) #3 - added option to create a datapoint/state which will show some combined state information values from the states which are used by the smart state
--   (ChriD) #1 - fixed multilayer path creation
+-   (ChriD) added option to create a datapoint/state which will show some combined state information values from the states which are used by the smart state
+-   (ChriD) fixed multilayer path creation
 
 ### 0.0.2 (2023-01-29)
 
