@@ -70,6 +70,28 @@ The behaviour how this works differs from calulation type to calcualtion type
 * For `max` the state with the maximal value will be filled
 * For `equals` all states which are euqal to the "first state value" in the child list will be filled
 
+The 'State Info Type' will set if, and how the values are beeing presented
+* `No info` will not create the state info object
+* `JSON array` will create a json array of the "used states"
+* `JSON object` will create a json object of the "used states" where the properties reflect the state id's
+* `String` will create a string which is semicollon seperated
+
+The value which is beeing stored is delivered by the `State info type function` and will be defaulted to the full id of the state, but the user can change this by changing this function. The function has to be a valid javascript code!<br>
+The variable `params` can be used and it has following properties
+
+    | Field | Description |
+    |-------------|-------------|
+    | `id` | The name of the smartstate |
+    | `stateObject` | The object of the state |
+    | `stateObjectInfo` | This is the object of the parent `device` for the state (if there is a device), otherwise its the same as `stateObject` |
+  
+The objects (`stateObject`, `stateObjectInfo`) are those you can see in the iobroker object list, e.g.:
+![image](https://user-images.githubusercontent.com/2505067/217324484-feffe2b6-06f2-47c7-a06a-42b738bb48d5.png)
+
+So for having the name inserted instead the id you can change te default function string to:
+![image](https://user-images.githubusercontent.com/2505067/217325001-2633f893-6a96-492d-b081-394b3cd5d55a.png)
+
+
 ## Changelog
 <!--
     Placeholder for the next version (at the beginning of the line):
