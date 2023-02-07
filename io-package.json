@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "smartstate",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "news": {
+      "0.0.3": {
+        "en": "added option to create a datapoint/state which will show some combined state information values from the states which are used by the smart state\nfixed multilayer path creation",
+        "de": "zusätzliche option zum erstellen eines datenpunktes/state, der einige kombinierte zustandsinformationswerte aus den zuständen zeigt, die vom smart state verwendet werden\nfeste mehrschichtbahn-erstellung",
+        "ru": "добавлена опция для создания точки/государства, которая покажет некоторые объединенные государственные информационные ценности из государств, которые используются умным государством\nфиксированное многослойное создание пути",
+        "pt": "opção adicionada para criar um datapoint / estado que irá mostrar alguns valores de informação do estado combinados dos estados que são usados pelo estado inteligente\ncriação de caminho multicamadas fixa",
+        "nl": "voegde optie toe om een datapoint/state te creëren die enkele gecombineerde staatsinformatie waarden van de staten die gebruikt worden door de slimme staat\nvertaling:",
+        "fr": "option ajoutée pour créer un point de données/état qui montrera quelques valeurs d'information de l'état combiné des états qui sont utilisés par l'état intelligent\ncréation de chemin multicouche fixe",
+        "it": "opzione aggiunta per creare un datapoint/stato che mostrerà alcuni valori combinati delle informazioni di stato dagli stati che vengono utilizzati dallo stato intelligente\ncreazione del percorso multistrato fisso",
+        "es": "opción agregada para crear un punto de datos/estado que mostrará algunos valores combinados de información estatal de los estados que son utilizados por el estado inteligente\ncreación de caminos multicapa fijo",
+        "pl": "dodano możliwość stworzenia punktu danych/stanu, który będzie przedstawiać pewne wspólne wartości informacyjne państw, które są używane przez państwo inteligentne\nmultilayer path creation",
+        "uk": "додано варіант створення інформаційної точки/держави, які покажуть деякі комбіновані значення державної інформації з держав, які використовуються в розумному стані\nфіксоване багатошарове створення шляху",
+        "zh-cn": "创造数据点/状态的更多选择将显示由智能国使用的各州所使用的一些综合国家信息价值观。\n固定的多功能道路的建立"
+      },
       "0.0.2": {
         "en": "added ability to define a 'value function' which can be used to change the value for the state before the operator is applied",
         "de": "zusätzliche fähigkeit, eine \"wert-funktion\" zu definieren, die verwendet werden kann, um den wert für den zustand zu ändern, bevor der bediener angewendet wird",
