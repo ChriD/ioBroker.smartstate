@@ -61,7 +61,14 @@ And here we use a function to count all lights (in this case kitchen) which are 
 Those smart states settings will create following states in the object tree
 ![image](https://user-images.githubusercontent.com/2505067/214383091-577a1dc9-10a5-4478-af3f-a8374a5a8487.png)
 
-
+## Using the "State Info Type"
+A smartstate has the ability to create an extra object/state which will include the id's of the "used states" by the smartstate<br>
+The behaviour how this works differs from calulation type to calcualtion type
+* For `count` `or` and `and` the states which resolve as `true` will be filled
+* For `sum` and `avg` all the states will be filled
+* For `min` the state with the minimal value will be filled
+* For `max` the state with the maximal value will be filled
+* For `equals` all states which are euqal to the "first state value" in the child list will be filled
 
 ## Changelog
 <!--
