@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "smartstate",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "news": {
+      "0.0.4": {
+        "en": "Hotfix adapter crash on startup",
+        "de": "Hotfix Adapter Absturz beim Start",
+        "ru": "Сбой адаптера Hotfix на стартапе",
+        "pt": "Falha do adaptador Hotfix na inicialização",
+        "nl": "Hotfix adapter crash op start",
+        "fr": "Accident de l'adaptateur Hotfix sur démarrage",
+        "it": "Aggiornamento dell'adattatore Hotfix all'avvio",
+        "es": "Calentador de adaptador de Hotfix en arranque",
+        "pl": "Hotfix adapter crash",
+        "uk": "Збій адаптера Hotfix на старті",
+        "zh-cn": "九. 开端的霍特菲克斯适应器"
+      },
       "0.0.3": {
         "en": "added option to create a datapoint/state which will show some combined state information values from the states which are used by the smart state\nfixed multilayer path creation",
         "de": "zusätzliche option zum erstellen eines datenpunktes/state, der einige kombinierte zustandsinformationswerte aus den zuständen zeigt, die vom smart state verwendet werden\nfeste mehrschichtbahn-erstellung",
