@@ -1,8 +1,9 @@
 'use strict';
 
 const utils = require('@iobroker/adapter-core');
+import { STATECALCTYPE, STATECHILDTYPE, STATEINFOTYPE } from './admin/libs/common/constants.js';
 
-
+/*
 const STATECALCTYPE = {
     COUNT: 'count',
     SUM: 'sum',
@@ -24,7 +25,7 @@ const STATEINFOTYPE = {
     JSONARRAY: 'JSON array',
     JSONOBJECT: 'JSON object',
     STRING: 'String'
-};
+};*/
 
 class Smartstate extends utils.Adapter {
 
