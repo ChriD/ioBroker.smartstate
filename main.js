@@ -565,4 +565,4 @@ if (require.main !== module) {
     module.exports = (options) => new Smartstate(options);
 } else {
     new Smartstate();
-}id
+}
