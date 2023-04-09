@@ -320,6 +320,7 @@ class Smartstate extends utils.Adapter {
             let stateInfoValue;
             let stateInfoStates = new Array();
             let stateDatatype;
+            let stateCounter = 0;
 
             // initialize the smart value from it's csalculation type
             switch(smartState.calctype)
@@ -388,7 +389,7 @@ class Smartstate extends utils.Adapter {
 
                     let value;
                     if(childObject.function)
-                        value = this.evaluateFunction(childObject.function, { state: state, value: state.val, childCount: smartState.childs.length });
+                        value = this.evaluateFunction(childObject.function, { state: state, value: state.val });
                     else
                         value = state.val;
 
@@ -448,17 +449,20 @@ class Smartstate extends utils.Adapter {
                         default:
                             this.log.error(`Wrong or not implemented calculation type: ${smartState.calctype}`);
                     }
+
+                    // count the states which are used for calculating the value
+                    stateCounter++;
                 }
             }
 
             // if we have set the state type to average value, we have to divide the sum of the values (which is the smartValue on AVG type)
             // with the count of the childs.
-            if(smartState.calctype == STATECALCTYPE.AVG && smartState.childs.length)
-                smartValue = smartValue / smartState.childs.length;
+            if(smartState.calctype == STATECALCTYPE.AVG && stateCounter)
+                smartValue = smartValue / stateCounter;
 
             // at the end a user function may change the overall smartValue
             if(smartState.function)
-                smartValue = this.evaluateFunction(smartState.function, { value: smartValue, childCount: smartState.childs.length });
+                smartValue = this.evaluateFunction(smartState.function, { value: smartValue, childCount: stateCounter });
 
             this.log.debug(`New value was created for smartstate ${_smartStateId}: ${smartValue}`);
 
