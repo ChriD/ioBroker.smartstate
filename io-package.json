@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "smartstate",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "news": {
+      "0.0.5": {
+        "en": "Fixed Problem with \"AVG\" calculation type when using patterns",
+        "de": "Problem mit AVG-Berechnungstyp bei der Verwendung von Mustern behoben",
+        "ru": "Исправлена проблема с типом расчета AVG при использовании паттернов",
+        "pt": "Problema corrigido com o tipo de cálculo AVG ao usar padrões",
+        "nl": "Probleem opgelost met AVG berekeningstype als je patronen gebruikt",
+        "fr": "Problème fixe avec le type de calcul AVG lorsque vous utilisez des modèles",
+        "it": "Problema risolto con il tipo di calcolo AVG quando si utilizzano i modelli",
+        "es": "Problema fijo con el tipo de cálculo AVG al utilizar patrones",
+        "pl": "Fixed Problem z obliczeniami AVG przy użyciu wzorów",
+        "uk": "Виправлена задача з типом розрахунку AVG при використанні візерунків",
+        "zh-cn": "AVG计算类型混合问题"
+      },
       "0.0.4": {
         "en": "Hotfix adapter crash on startup",
         "de": "Hotfix Adapter Absturz beim Start",

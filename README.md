@@ -97,7 +97,7 @@ So for having the name inserted instead the id you can change te default functio
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.0.5 (2023-04-09)
 -   (ChriD) Fixed Problem with "AVG" calculation type when using patterns
 
 ### 0.0.4 (2023-02-07)
